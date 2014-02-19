@@ -33,42 +33,23 @@
 libraries<- c("tm","fastcluster","Snowball","ggplot2","RWeka","reshape2","RCurl","igraph")
 loadLib<- sapply(libraries, function(x) require(x,character.only=TRUE))
 if(all(loadLib)!=TRUE){
-unLoaded<- which(loadLib==FALSE)
+unLoaded<- which(loadLib!=TRUE)
 install.packages(libraries[unLoaded],repos="http://cran.us.r-project.org")
 sapply(libraries[unLoaded],function(x) require(x,character.only=TRUE))
 }
 
-#the following was initially added to reduce computation
-#however, it was recognised that reactive conducters can be used instead
-#myCorpus<- list()
-
-
-#============================ Load stopwords/thesauri
-
-stopwordsLink<- getURL("https://raw2.github.com/noobuseR/Datasets/master/myStopwords.txt",ssl.verifypeer=FALSE)
-thesaurusLink<- getURL("https://raw2.github.com/noobuseR/Datasets/master/thesaurus.txt",ssl.verifypeer=FALSE)
-customStopwords<- read.table(textConnection(stopwordsLink),sep=" ",header=FALSE,as.is=TRUE)
-customThesaurus<- read.table(textConnection(thesaurusLink),sep=" ",header=TRUE,as.is=TRUE)
-myStopwords<- customStopwords[,2]
-myStopwords<- gsub("$"," ",myStopwords)
-myStopwords<- gsub("^"," ",myStopwords)
-initialWords<- customThesaurus[,"InitialWords"]
-initialWords<- gsub("^"," ",initialWords)
-initialWords<- gsub("$"," ",initialWords)
-finalWords<- customThesaurus[,"FinalWords"]
-finalWords<- gsub("^"," ",finalWords)
-finalWords<- gsub("$"," ",finalWords)
 
 
 #============================= Build required functions
 
 #======= Pre-processing Corpus
 
-cleanSweepCorpus<- function(corpus, stopwords=FALSE, stem=FALSE,removePunct=FALSE,removeNum=FALSE,synonyms=FALSE,customStopwords=FALSE){
+cleanSweepCorpus<- function(corpus, useStopwords=FALSE, stem=FALSE,removePunct=FALSE,removeNum=FALSE,useSynonyms=FALSE,
+				initialWords,replacementWords,useCustomStopwords=FALSE,customStopwords){
 newCorpus<- corpus
 newCorpus<- tolower(newCorpus)
 newCorpus<- gsub("[\\)(\"]"," ",newCorpus)
-if(stopwords != FALSE){
+if(useStopwords != FALSE){
 	englishStopwords<- c(stopwords("SMART"),stopwords("english"))
 	englishStopwords<- gsub("^","\\\\b",englishStopwords)
 	englishStopwords<- gsub("$","\\\\b",englishStopwords)
@@ -76,19 +57,24 @@ if(stopwords != FALSE){
 	newCorpus<<- gsub(...,replacement=" ",x=newCorpus)},
 	pattern=englishStopwords)
 	}
-if (customStopwords != FALSE){
-	customStopwords<- gsub("^","\\\\b",customStopwords)
-	customStopwords<- gsub("$","\\\\b",customStopwords)
+if (useCustomStopwords != FALSE){
+	stopwordsList<- unlist(strsplit(customStopwords,split=","))
+	modifiedStopwordsList<- gsub("^\\s*","\\\\b",stopwordsList)
+	modifiedStopwordsList<- gsub("\\s*$","\\\\b",modifiedStopwordsList)
 	x<- mapply(FUN=function(...){
 	newCorpus<<- gsub(...,replacement=" ",x=newCorpus)},
-	pattern=customStopwords)
+	pattern=modifiedStopwordsList)
 	}
-if(synonyms != FALSE & (length(initialWords)==length(finalWords))){
-	initialWords<- gsub("^","\\\\b",initialWords)
-	initialWords<- gsub("$","\\\\b",initialWords)
-	x<- mapply(FUN=function(...){
-	newCorpus<<- gsub(...,x=newCorpus)},
-	pattern=initialWords, replacement=finalWords)
+if(useSynonyms != FALSE){
+	toChange<- unlist(strsplit(initialWords,split=","))
+	changeInto<- unlist(strsplit(replacementWords,split=","))
+	toChangeWords<- gsub("^\\s*","\\\\b",toChange)
+	toChangeWords<- gsub("\\s*$","\\\\b",toChangeWords)
+	changeIntoWords<- gsub("^\\s*|\\s*$","",changeInto)
+	if(length(toChangeWords)==length(changeIntoWords)){
+		x<- mapply(FUN=function(...){
+		newCorpus<<- gsub(...,x=newCorpus)},
+		pattern=toChangeWords, replacement=changeIntoWords)}
 	}
 if(removePunct!=FALSE){
 	newCorpus<- gsub("[[:punct:]]"," ", x=newCorpus)
@@ -103,22 +89,13 @@ finalCorpus<- Corpus(VectorSource(newCorpus))
 if(stem!=FALSE){
 	finalCorpus<- tm_map(finalCorpus,stemDocument)
 	}
+finalCorpus<- tm_map(finalCorpus,stripWhitespace)
 return(finalCorpus)
 }
 
 
 
-
-#======= X-axis spacing for phrase clouds
-
-mySpacing<- function(frequency){
-seq(-min(frequency)/mean(frequency),max(frequency)/mean(frequency),length.out=length(frequency))
-}
-###code borrowed from: http://bridgewater.wordpress.com/2012/04/18/a-word-cloud-where-the-x-and-y-axes-mean-something/
-
-
-
-#======= My GitHub url for datasets
+#======= Access my GitHub url for loading datasets
 
 ghubURL<- "https://raw2.github.com/noobuseR/Datasets/master/"
 
@@ -185,7 +162,10 @@ preprocessedCorpus<- reactive({
 				if(input$startPreprocess==0)
 				return()
 				isolate({
-					newCorpus<- cleanSweepCorpus(corpus=initialCorpus(),stopwords=input$stopwords,stem=input$stemming,removePunct=input$punctuation,removeNum=input$numbers,synonyms=input$customThes,customStopwords=input$customStop)
+					newCorpus<- cleanSweepCorpus(corpus=initialCorpus(),useStopwords=input$stopwords,
+					stem=input$stemming,removePunct=input$punctuation,removeNum=input$numbers,useSynonyms=input$customThes,
+					useCustomStopwords=input$customStopword,initialWords=input$customThesInitial,
+					replacementWords=input$customThesReplacement,customStopwords=input$cusStopwords)
 					newCorpus })
 			})
 
@@ -199,8 +179,8 @@ output$procCorpusStatus<- renderPrint({
 
 
 
-
-
+#####output$stopper<- renderText({input$cusStopwords })
+#####output$check<- renderText({input$customStop})
 
 
 #========================================================================================================================#
@@ -289,7 +269,7 @@ rankFrequencyPlot<- reactive({
 					myDf<- myDf[order(myDf$freq,decreasing=TRUE),]
 					myDf<- transform(myDf,rank=seq_along(myDf$freq)) 
 					ggplot(data=myDf,aes(x=log10(rank),y=log10(freq))) + geom_text(aes(label=words,size=3,angle=45)) +
-					xlab("Words") + ylab("Frequency in Log scale") + scale_size(guide="none") + ggtitle("Rank-Frequency Plot")
+					xlab("Words' Rank") + ylab("Frequency in Log scale") + scale_size(guide="none") + ggtitle("Rank-Frequency Plot")
 					})
 			})
 
@@ -365,9 +345,48 @@ output$downloadWordFreqPlot<- downloadHandler(
 
 
 
+#========================================================================================================================#
+##===================================  Section 6: Clustering Documents =============================================================##
+
+
+mdsDocClustering<- reactive({
+				if(input$generateDocCluster==0)
+				return()
+				isolate({
+					distMatrix<- dist(t(finalUnigramMatrix()))
+					mdsPoints<- cmdscale(d=distMatrix,eig=TRUE)
+					kClusters<- kmeans(t(finalUnigramMatrix()),centers=input$groupDocs,nstart=30)
+					clusterData<- data.frame(docNumber=colnames(finalUnigramMatrix()),x=mdsPoints$points[,1],y=mdsPoints$points[,2],cluster=kClusters$cluster)
+					ggplot(data=clusterData,aes(x=x,y=y)) + geom_point() + geom_text(aes(label=docNumber,colour=as.factor(cluster))) +
+					ggtitle("Clustering Documents") + scale_colour_brewer(palette="Dark2",name="Document Groups") + theme(axis.ticks=element_blank()) +
+					xlab("") + ylab("") + scale_x_continuous(breaks=c(min(clusterData$x),max(clusterData$x)),labels=c("","")) +
+					scale_y_continuous(breaks=c(min(clusterData$y),max(clusterData$y)),labels=c("",""))
+					})
+			})
+					
+
+output$docClusters<- renderPlot({
+				if(input$generateDocCluster==0)
+				return()
+				print(mdsDocClustering())
+			})
+
+output$downloadDocCluster<- downloadHandler(
+					filename=function(){paste0("DocClusters",Sys.time(),".pdf")},
+					content=function(file){
+						pdf(file,width=14,height=12)
+						print(mdsDocClustering())
+						dev.off()
+			})
+
+
+
+
+
+
 
 #========================================================================================================================#
-##===================================  Section 6: Clustering words ===============================================================##
+##===================================  Section 7: Clustering words ===============================================================##
 
 
 
@@ -382,7 +401,7 @@ dendroGraphic<- reactive({
 					targetWords<- findFreqTerms(mainMat,input$dendroSize,Inf)
 					mainMat<- mainMat[targetWords] }
 				distMat<- dist(scale(mainMat))
-				dendro<- hclust(distMat,method="ward")
+				dendro<- hclust(distMat,method="average")
 				plot(dendro)
 				})
 			})
@@ -445,42 +464,6 @@ output$downloadAssoc<- downloadHandler(
 					print(associativeCloud())
 					dev.off()
 			})
-
-
-
-
-
-#========================================================================================================================#
-##===================================  Section 7: Clustering Documents =============================================================##
-
-
-mdsDocClustering<- reactive({
-				if(input$generateDocCluster==0)
-				return()
-				isolate({
-					distMatrix<- dist(finalUnigramMatrix())
-					mdsPoints<- cmdscale(d=distMatrix,eig=TRUE)
-					clusterData<- data.frame(docNumber=rownames(finalUnigramMatrix()),x=mdsPoints$points[,1],y=mdsPoints$points[,2])
-					ggplot(data=clusterData,aes(x=x,y=y)) + geom_point() + geom_text(aes(label=attr(distMatrix,"Labels"))) +
-					ggtitle("Clustering Documents")
-					})
-			})
-					
-
-output$docClusters<- renderPlot({
-				if(input$generateDocCluster==0)
-				return()
-				print(mdsDocClustering())
-			})
-
-output$downloadDocCluster<- downloadHandler(
-					filename=function(){paste0("DocClusters",Sys.time(),".pdf")},
-					content=function(file){
-						pdf(file,width=14,height=12)
-						print(mdsDocClustering())
-						dev.off()
-			})
-
 
 
 
@@ -595,423 +578,10 @@ observe({
 		updateTabsetPanel(session,"tabset1","Word Networks")}
 	else if(input$phase=="about"){
 		updateTabsetPanel(session,"tabset1","About")}
-	else if(input$phase=="introduction"){
+	else if(input$phase=="userGuide"){
 		updateTabsetPanel(session,"tabset1","Introduction")}
 })
 
-
-
-
-
-
-################################################### OLD CODE #######################################################################################
-################################################### OLD CODE ######################################################################################
-################################################### OLD CODE ######################################################################################
-
-
-
-
-#===For bigrams
-#finalBigramMatrix<- reactive({
-#				weightingScheme<- paste0(input$termWeight,input$docWeight,input$normalisation)
-##				initialMatrix<- TermDocumentMatrix(preprocessedCorpus(),
-#							control=list(weighting=function(x) weightSMART(x,spec=weightingScheme),
-#							tokenize=bigramTokenizer))
-#				initialMatrix })
-
-
-
-
-#phraseGraphic<- reactive({
-#			if(input$generatePhrase==0)
-#			return()
-#			isolate({
-#			myMat<- finalBigramMatrix()
-#			words<- rownames(as.matrix(myMat))
-#			distMat<- dist(as.matrix(myMat))
-#			set.seed(1013)
-#			groups<- kmeans(distMat,centers=input$groupPhrase)
-#			freq<- rowSums(as.matrix(myMat))
-#			bigramDf<- data.frame(words=words,freq=freq,cluster=as.factor(groups$cluster),stringsAsFactors=FALSE)
-#			
-#			bigramDf<- transform(bigramDf,y.pos=mySpacing(bigramDf$freq))
-#			if(input$representation=="frequency"){
-#				if(input$phraseSize!=0){
-#					bigramDf<- subset(bigramDf,freq>quantile(bigramDf$freq)[input$phraseSize])
-#				}
-##				ggplot(data=bigramDf,aes(x=freq,y=y.pos)) + geom_text(aes(label=words,size=freq,colour=cluster)) + xlab("") + ylab("Term Frequency") +
-#				theme_bw() + scale_colour_brewer(palette="Dark2",guide="none") + scale_size("Word Frequency")  +
-#				scale_x_continuous(breaks=c((min(bigramDf$freq))-10,(max(bigramDf$freq))+10),labels=c("","")) + 
-#				scale_y_continuous(breaks=c((min(bigramDf$y.pos))-10,(max(bigramDf$y.pos))+10),labels=c("","")) +
-#				theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank(),axis.ticks=element_blank()) 
-#			}
-#			else{
-#				bigramDf<- transform(bigramDf,x.pos=4*(as.numeric(cluster)))
-#				if(input$phraseSize!=0){
-#					bigramDf<- subset(bigramDf,freq>quantile(bigramDf$freq)[input$phraseSize])
-#				}
-#				ggplot(data=bigramDf,aes(x=x.pos,y=y.pos)) + geom_text(aes(label=words,size=freq,colour=cluster)) + xlab("") + ylab("Term Frequency") +
-#				theme_bw() + scale_colour_brewer(palette="Dark2",guide="none") + scale_size("Word Frequency",range=c(3,15))  +
-#				scale_x_continuous(breaks=c((min(bigramDf$x.pos))-5,(max(bigramDf$x.pos))+5),labels=c("","")) + 
-#				scale_y_continuous(breaks=c((min(bigramDf$y.pos))-5,(max(bigramDf$y.pos))+5),labels=c("","")) +
-#				theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank(),axis.ticks=element_blank()) 
-#			} }) })
-#
-
-
-#output$dendrogram<- renderPlot({
-#				if(input$generateDendro==0)
-#				return()
-#				print(dendroGraphic())
-#			})
-
-#output$downloadDendro<- downloadHandler(
-#				filename=function(){paste("Dendrogram",Sys.time(),".pdf",sep="")},
-#				content=function(file){
-#					pdf(file, width=14,height=12)
-#					print(dendroGraphic())
-#					dev.off()
-#			})
-#
-
-#output$assocCloud<- renderPlot({
-#				if(input$generateAssoc==0)
-#				return()
-#				print(assocGraphic())
-#			})
-#
-
-
-#output$phraseCloud<- renderPlot({
-#				if(input$generatePhrase==0)
-#				return()
-#				print(phraseGraphic())
-#			})
-#
-#output$downloadPhrase<- downloadHandler(
-#				filename=function(){paste("Phrase Cloud",Sys.time(),".pdf",sep="")},
-#				content=function(file){
-#					pdf(file,width=14,height=12)
-#					print(phraseGraphic())
-#					dev.off()
-#			})
-
-
-#output$wordNetwork<- renderPlot({
-#				if(input$generateNetwork==0)
-#				return()
-#				print(networkGraphic())
-#			})
-
-
-
-
-##########################################################################################################################################
-##########################################################################################################################################
-##########################################################################################################################################
-##########################################################################################################################################
-
-#unigramMatrix<- reactive({
-#			weightingScheme<- paste0(input$termWeight,input$docWeight,input$normalisation)
-#			initialMatrix<- TermDocumentMatrix(preprocessedCorpus(),
-#					   control=list(weighting=function(x) weightSMART(x,spec=weightingScheme)))
-#			finalUnigramMatrix<- initialMatrix
-##			finalUnigramMatrix
-#			if(input$lowerFreq!=1){
-#			lowerBound<- findFreqTerms(finalUnigramMatrix,input$lowerFreq,Inf)
-#			finalUnigramMatrix<- finalUnigramMatrix[lowerBound]}
-#			if(input$sparsity!=100){
-#			finalUnigramMatrix<- removeSparseTerms(finalUnigramMatrix,sparse=(input$sparsity/100))} 
-##			finalUnigramMatrix 
-#			})
-#
-
-
-#finalBigramMatrix<- reactive({
-#			weightingScheme<- paste0(input$termWeight,input$docWeight,input$normalisation)
-#			initialMatrix<- TermDocumentMatrix(preprocessedCorpus(),
-#					   control=list(weighting=function(x) weightSMART(x,spec=weightingScheme),
-#					   tokenize=bigramTokenizer))
-#			finalBigramMatrix<- initialMatrix
-#			if(input$lowerFreq!=1){
-#			lowerBound<- findFreqTerms(finalBigramMatrix,input$lowerFreq,Inf)
-#			finalBigramMatrix<- finalBigramMatrix[lowerBound]}
-#			if(input$sparsity!=100){
-#			finalBigramMatrix<- removeSparseTerms(finalBigramMatrix,sparse=(input$sparsity/100))} 
-#			finalBigramMatrix })
-			
-
-
-#output$downloadDendro<- downloadHandler(
-#				filename=function(){paste("dendrogram",Sys.time(),".png",sep="")},
-#				content=function(file) {
-#					png(file)
-#					print(dendroGraphic())
-#					dev.off()
-#				})
-
-
-
-#output$downloadAssoc<- downloadHandler(
-#				filename=function(){paste("Associative WordCloud",Sys.time(),".png",sep="")},
-#				content=function(file) {
-#					png(file, width=1000,height=800,res=80,pointsize=4)
-#					print(assocGraphic())
-#					dev.off()
-#				})
-
-#output$downloadAssoc2<- downloadHandler(
-#				filename=function(){paste("Associative WordCloud",Sys.time(),".png",sep="")},
-#				content=function(file) {
-#					
-#					ggsave(file,assocGraphic(),dpi=1200)
-#				})
-
-
-
-
-#output$downloadPhrase<- downloadHandler(
-#				filename=function(){paste("Phrase Cloud",Sys.time(),".png",sep="")},
-#				content=function(file) {
-#				png(file)
-#				print(phraseGraphic())
-#				dev.off()
-#				})
-
-#output$downloadNetwork<- downloadHandler(
-#					filename=function(){paste("WordNetwork",Sys.time(),".png",sep="")},
-#					content=function(file) {
-#					png(file)
-#					print(networkGraphic())
-#					dev.off()
-#				})
-#
-
-
-
-#unigramMatrix<- reactive({
-#			if(input$termweight=="weightTf"){
-#			initialUnigramMatrix<- TermDocumentMatrix(preprocessedCorpus(),control=list(weighting=weightTf)) }
-#			if(input$weight=="weightTfIdf"){
-#			initialUnigramMatrix<- TermDocumentMatrix(preprocessedCorpus(),control=list(weighting=weightTfIdf)) }
-#			if(input$weight=="bin"){
-#			initialUnigramMatrix<- TermDocumentMatrix(preprocessedCorpus(),control=list(weighting=weightBin)) }
-#			finalUnigramMatrix<- initialUnigramMatrix
-#			if(input$lowerFreq!=1){
-#			lowerBound<- findFreqTerms(finalUnigramMatrix,input$lowerFreq,Inf)
-#			finalUnigramMatrix<- initialUnigramMatrix[lowerBound]}
-#			if(input$sparsity!=100){
-#			finalUnigramMatrix<- removeSparseTerms(finalUnigramMatrix, sparse=(input$sparsity/100))}
-#			finalUnigramMatrix })
-#
-
-#bigramMatrix<- reactive({
-#			if(input$weight=="weightTf"){
-#			initialBigramMatrix<- TermDocumentMatrix(preprocessedCorpus(),control=list(weighting=weightTf,tokenize=bigramTokenizer)) }
-#			if(input$weight=="weightTfIdf"){
-#			initialBigramMatrix<- TermDocumentMatrix(preprocessedCorpus(),control=list(weighting=weightTfIdf,tokenize=bigramTokenizer)) }
-#			if(input$weight=="bin"){
-#			initialBigramMatrix<- TermDocumentMatrix(preprocessedCorpus(),control=list(weighting=weightBin,tokenize=bigramTokenizer)) }
-#			lowerBound<- findFreqTerms(initialBigramMatrix,input$lowerFreq,Inf)
-#			finalBigramMatrix<- initialBigramMatrix[lowerBound]
-#			if(input$sparsity!=100){
-#			finalBigramMatrix<- removeSparseTerms(finalBigramMatrix, sparse=(input$sparsity/100))}
-#			finalBigramMatrix })
-#
-
-
-
-#assocWordsDf1<- reactive({
-#			myMat<- as.matrix(unigramMatrix())
-#			myAdjMat<- myMat %*% t(myMat)
-#			diag(myAdjMat)<- 0
-#			freq<- rowSums(myMat)
-#			
-#			adjGraph<- graph.adjacency(myAdjMat,weighted=TRUE)
-#			coordinates<- layout.kamada.kawai(adjGraph)
-#			wordsDf<- data.frame(term=V(adjGraph)$name,x.pos=coordinates[,1],y.pos=coordinates[,2],stringsAsFactors=FALSE)
-#			set.seed(1011)
-#			wordsKmeans<- kmeans(wordsDf[,c(2,3)],5)
-#			
-#			wordsDf<- transform(wordsDf,freq=freq, percentOfDoc=100*(freq/length(preprocessedCorpus)),groups=as.factor(wordsKmeans$cluster))
-#			ggplot(data=wordsDf,aes(x=x.pos,y=y.pos)) + geom_text(aes(label=term,size=freq,alpha=percentOfDoc,colour=groups)) + xlab("") + ylab("") +
-#			theme_bw() + scale_colour_brewer(palette="Dark2",guide="none") + scale_size("Word Frequency",range=c(3,15)) + scale_alpha("Overall Importance of Word",range=c(0.4,1)) +
-#			scale_x_continuous(breaks=c(min(wordsDf$x.pos),max(wordsDf$x.pos)),labels=c("","")) + scale_y_continuous(breaks=c(min(wordsDf$y.pos),max(wordsDf$y.pos)),labels=c("","")) +
-#			theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank(),axis.ticks=element_blank()) })
-#
-
-
-
-#networkDf1<- reactive({
-#			myMat<- as.matrix(unigramMatrix())
-#			adjMat<- myMat %*% t(myMat)
-#			
-#			adjGraph<- graph.adjacency(adjMat,diag=FALSE,weighted=TRUE)
-#			adjGraph<- delete.edges(adjGraph,E(adjGraph)[E(adjGraph)$weight<=1])	
-#			coordinates<- layout.kamada.kawai(adjGraph)					
-#			myEdges<- get.edgelist(adjGraph)
-#			mainDf<- data.frame(words=rownames(myMat),freq=rowSums(myMat),x.pos=coordinates[,1],y.pos=coordinates[,2],stringsAsFactors=FALSE)
-#			otherDf<- data.frame(edges1=myEdges[,1],edges2=myEdges[,2],weights=E(adjGraph)$weight,stringsAsFactors=FALSE)
-#			otherDf$id<- row.names(otherDf)
-#			auxiliaryDf<- melt(otherDf,id.vars=c(3,4))
-#			names(auxiliaryDf)[4]<- "words"
-#			finalDf<- merge(mainDf,auxiliaryDf,by="words",sort=FALSE)
-#			finalDf<- na.omit(finalDf)
-#			ggplot(data=networkDf1,aes(x=x.pos,y=y.pos)) + geom_line(linetype=1,aes(colour=weights,group=id,alpha=0.2)) +
-#				geom_text(aes(x=x.pos,y=y.pos,label=words,size=freq)) + scale_size(guide="none") + scale_alpha(guide="none") + 
-#				scale_colour_continuous(low="#CCCC66",high="#006600","Weight Strength") + theme_bw() + xlab("") + ylab("") +
-#				scale_x_continuous(breaks=c(min(networkDf1$x.pos),max(networkDf1$x.pos)),labels=c("","")) + 
-#				scale_y_continuous(breaks=c(min(networkDf1$y.pos),max(networkDf1$y.pos)),labels=c("","")) +
-#				theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank(),axis.ticks=element_blank()) })
-
-
-
-
-
-#output$assocCloud<- renderPlot({
-#				if(!(input$fullCloud & input$assocCloud))
-#				return() 
-#				isolate({
-#				print(ggplot(data=assocDf,aes(x=x.pos,y=y.pos)) + geom_text(aes(label=term,size=freq,alpha=percentOfDoc,colour=groups)) + xlab("") + ylab("") +
-#			    	theme_bw() + scale_colour_brewer(palette="Dark2",guide="none") + scale_size("Word Frequency",range=c(3,15)) + scale_alpha("Overall Importance of Word",range=c(0.4,1)) +
-#			    	scale_x_continuous(breaks=c(min(assocDf$x.pos),max(assocDf$x.pos)),labels=c("","")) + scale_y_continuous(breaks=c(min(assocDf$y.pos),max(assocDf$y.pos)),labels=c("","")) +
-#			    	theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank(),axis.ticks=element_blank())) })
-# 			})
-
-				
-
-
-#output$assocCloud2<- renderPlot({
-#				assocDf<- assocWordsDf()
-#				assocDfSubset<- subset(assocDf,freq>quantile(assocDf$freq)[2])
-#				if(!(input$impCloud & input$assocCloud))
-#				return() 
-#				isolate({				
-#				print(ggplot(data=assocDfSubset,aes(x=x.pos,y=y.pos)) + geom_text(aes(label=term,size=freq,alpha=percentOfDoc,colour=groups)) + xlab("") + ylab("") +
-#			    	theme_bw() + scale_colour_brewer(palette="Dark2",guide="none") + scale_size("Word Frequency",range=c(3,15)) + scale_alpha("Overall Importance of Word",range=c(0.4,1)) +
-#			    	scale_x_continuous(breaks=c(min(assocDfSubset$x.pos),max(assocDfSubset$x.pos)),labels=c("","")) + scale_y_continuous(breaks=c(min(assocDfSubset$y.pos),max(assocDfSubset$y.pos)),labels=c("","")) +
-#			    	theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank(),axis.ticks=element_blank())) })
-#			}) 
-
-	
-
-#output$downloadCloud2<- downloadHandler(
-#				filename=function() {paste("assocWordCloud2",Sys.time(),".png",sep="")},
-#				content=function(file){
-#					png(file)
-#    					assocCloud2()
-#      				dev.off()
-#    				})					
-	
-
-
-#output$phraseCloud1<- renderPlot({
-#				phraseDf1<- phraseDf()
-#				if(!(input$fullPhrase & input$phraseCloud))
-#				return()
-#				isolate({
-#				print(ggplot(data=phraseDf1,aes(x=freq,y=y.pos)) + geom_text(aes(label=words,colour=cluster)) +
-#				theme_bw() + scale_colour_brewer(palette="Dark2",guide="none") + xlab("") + ylab("") +
-#				scale_x_continuous(breaks=c(min(phraseDf1$freq),max(phraseDf1$freq)),labels=c("","")) + scale_y_continuous(breaks=c(min(phraseDf1$y.pos),max(phraseDf1$y.pos)),labels=c("","")) +
-#				theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank(),axis.ticks=element_blank())) })
-#			})
-
-
-#output$phraseCloud2<- renderPlot({
-#				phraseDf2<- phraseDf()
-#				phraseDf2Subset<- subset(phraseDf2,freq>quantile(phraseDf2$freq)[3])
-#				if(!(input$impPhrase & input$phraseCloud))
-#				return()
-#				isolate({
-#				print(ggplot(data=phraseDf2Subset,aes(x=freq,y=y.pos)) + geom_text(aes(label=words,colour=cluster)) +
-#				theme_bw() + scale_colour_brewer(palette="Dark2",guide="none") + xlab("") + ylab("") +
-#				scale_x_continuous(breaks=c(min(phraseDf2Subset$freq),max(phraseDf2Subset$freq)),labels=c("","")) + scale_y_continuous(breaks=c(min(phraseDf2Subset$y.pos),max(phraseDf2Subset$y.pos)),labels=c("","")) +
-#				theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank(),axis.ticks=element_blank())) })
-#			})
-#				
-		
-#output$network1<- renderPlot({
-#				networkDf1<- networkDf1()
-#				if(!(input$fullNetwork & input$networkWords))
-#				return()
-#				isolate({
-#				print(ggplot(data=networkDf1,aes(x=x.pos,y=y.pos)) + geom_line(linetype=1,aes(colour=weights,group=id,alpha=0.2)) +
-#				geom_text(aes(x=x.pos,y=y.pos,label=words,size=freq)) + scale_size(guide="none") + scale_alpha(guide="none") + 
-#				scale_colour_continuous(low="#CCCC66",high="#006600","Weight Strength") + theme_bw() + xlab("") + ylab("") +
-#				scale_x_continuous(breaks=c(min(networkDf1$x.pos),max(networkDf1$x.pos)),labels=c("","")) + 
-#				scale_y_continuous(breaks=c(min(networkDf1$y.pos),max(networkDf1$y.pos)),labels=c("","")) +
-#				theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank(),axis.ticks=element_blank())) })
-#			})
-						
-
-#output$network2<- renderPlot({
-#				networkDf2<- networkDf2()
-#				if(!(input$impNetwork & input$networkWords))
-#				return()
-#				isolate({
-#				print(ggplot(data=networkDf2,aes(x=x.pos,y=y.pos)) + geom_line(linetype=1,aes(colour=weights,group=id,alpha=0.2)) +
-#				geom_text(aes(x=x.pos,y=y.pos,label=words,size=freq)) + scale_size(guide="none") + scale_alpha(guide="none") +
-#				scale_colour_continuous(low="#CCCC66",high="#006600","Weight Strength") + theme_bw() + xlab("") + ylab("") +
-#				scale_x_continuous(breaks=c(min(networkDf2$x.pos),max(networkDf2$x.pos)),labels=c("","")) +
-#				scale_y_continuous(breaks=c(min(networkDf2$y.pos),max(networkDf2$y.pos)),labels=c("","")) +
-#				theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank(),axis.ticks=element_blank())) })
-#			})
-
-
-#output$testing<- renderPrint({
-#			myDf<- assocWordsDf ()
-#			myDf })
-#
-
-
-
-
-#assocCloudGraph1<- reactive({
-#			myMat<- as.matrix(unigramMatrix())
-#			myAdjMat<- myMat %*% t(myMat)
-#			myAdjMatCopy<- myAdjMat
-#			diag(myAdjMatCopy)<- 0
-#
-#			adjGraph<- graph.adjacency(myAdjMatCopy,weighted=TRUE)
-#			coordinates<- layout.kamada.kawai(adjGraph)
-#			wordsDf<- data.frame(term=V(adjGraph)$name,x.pos=coordinates[,1],y.pos=coordinates[,2],stringsAsFactors=FALSE)
-#			set.seed(1011)
-#			wordsKmeans<- kmeans(wordsDf[,c(2,3)],5)
-#			wordsDf<- transform(wordsDf,freq=diag(myAdjMat), percentOfDoc=100*(diag(myAdjMat)/length(preprocessedCorpus)),groups=as.factor(wordsKmeans$cluster))
-#			
-#			print(ggplot(data=wordsDf,aes(x=x.pos,y=y.pos)) + geom_text(aes(label=term,size=freq,alpha=percentOfDoc,colour=groups)) + xlab("") + ylab("") +
-#			    theme_bw() + scale_colour_brewer(palette="Dark2",guide="none") + scale_size("Word Frequency",range=c(3,15)) + scale_alpha("Overall Importance of Word",range=c(0.4,1)) +
-#			    scale_x_continuous(breaks=c(min(wordsDf$x.pos),max(wordsDf$x.pos)),labels=c("","")) + scale_y_continuous(breaks=c(min(wordsDf$y.pos),max(wordsDf$y.pos)),labels=c("","")) +
-#			    theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank(),axis.ticks=element_blank()))
-#			})
-# the above didn't work as plotting instructions are passed to reactive
-# rather than to renderPlot
-
-
-
-				
-
-
-
-				
-
-#output$assocCloud2<- renderPlot({
-#				assocCloudGraph2() })
-#				
-
-
-#output$test1<- renderPrint({
-#		if(input$focus=="words")
-#		print("ok")
-#		})	
-
-#output$test2<- renderPrint({
-#		stat<- input$sparsity
-#		stat
-#		})	
-
-
-#output$sparseTest<- renderPrint({ input$sparsity })
 
 
 

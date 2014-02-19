@@ -1,18 +1,85 @@
-<h3> Textual Analytics with R </h3>
+<h3> User Guide </h3>
 
-<p> This interactive application was developed for the use of the <a href="http://www.norfolk-pcc.gov.uk/">Office of the Police and Crime Commissioner</a>, Norfolk.</p>
-<p> It was developed using the following packages from R:
+<p> This User Guide has been writted to introduce users to Text Mining, in addition to guiding them in the various uses of this application. Users new to Text Mining may find it beneficial to view this <a href="https://db.tt/txmskBnX" target="_blank">presentation</a>. It has been broken down into the following sections, to correspond with the Phases in the drop down list:
 <ol>
-<li><a href="http://cran.r-project.org/web/packages/shiny/index.html" target="_blank">Shiny</a>
-<li><a href="http://cran.r-project.org/web/packages/tm/index.html" target="_blank">tm</a></li>
-<li><a href="http://cran.r-project.org/web/packages/igraph/index.html" target="_blank">igraph</a></li>
-<li><a href="http://cran.r-project.org/web/packages/ggplot2/index.html" target="_blank">ggplot2</a></li>
-</ol>
-</p>
-<h4> Contact Information </h4>
+<li>Importing a Corpus</li>
+<li>Pre-processing</li>
+<li>Feature Generation</li>
+<li>Feature Selection</li>
+<li>Initial Analysis</li>
+<li>Clustering Documents</li>
+<li>Clustering Words</li>
+<li>Words Network Generation</li>
+</ol></p>
 
-To report any issues, complaints, or suggestions, please email Ali Arsalan Kazmi at either
+<hr>
+
+<h4> 1. Importing a Corpus </h4>
+To faciitate users in importing a corpus, 3 options are provided: 
+<dl>
+<dt>A directory of Text files</dt>
+<dl>This option is to be chosen in case the user has a directory consisting of text files, all of which form the corpus in aggregation.</dl>
+<dt>A Single Text file</dt>
+<dl>In case users have a single text file which is the corpus, this option is to be selected.</dl>
+<dt>Sample Corpora</dt>
+<dl>If a user has neither a directory of text files nor a single text file, this option can be selected to make use of sample corpora made available with the application. Presently, 3 corpora are ready to use:
 <ul>
-<li><a href="mailto:scac_1041@hotmail.com">scac_1041@hotmail.com</a></li>
-Or
-<li><a href="mailto:fazanarslan@yahoo.com">fazanarslan@yahoo.com</a></li>
+<li>UAE Expat Forum: A corpus formed after scrapping discussions from the UAE Expat discussion forum.</li>
+<li>UAE Trip Advisor: A corpus formed after scrapping threads from the UAE Trip Advisor website.</li>
+<li>Middle East Politics: A corpus formed after scrapping discussions from a discussion forum pertaining to Middle Eastern politics.</li></ul>
+<hr>
+
+<h4> 2. Pre-processing </h4>
+This phase facilitates users in performing some basic pre-processing operations on textual data. These include the following:
+<ul>
+<li>Punctuation removal</li>
+<li>Numbers removal</li>
+<li>Stemming words</li>
+<li>Stopwords removal</li>
+In addition to the above, users may also add their own stopwords or thesauri by checking Custom stopwords/Thesauri boxes. Words entered in either of these text boxes must be separated by a comma.
+<hr>
+
+<h4> 3. Feature Generation </h4>
+After users have performed pre-processing operations on their corpus data, they must generate features (words) and determine the importance of each using some basic measures. These measures are called weighting measures — as they determine the weight (or importance) of features.
+<p> Several feature weighting measures are available in this application, due to their availability in the <a href="http://cran.r-project.org/package=tm" target="_blank">tm</a> package. These measures are referred to as the SMART notation, and more information about the measures can be found by perusing the research paper <a href="http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.101.9086" target="_blank">here</a>.</p>
+
+<hr>
+
+<h4> 4. Feature Selection </h4>
+Feature Selection is an important phase as it enables data analysts to reduce the number of features by removing the unnecessary ones. This technique is especially important in certain applications of Qualitative analysis or Text Mining, as with textual data it is normal to have an extremely large number of features.
+<p>In this application, two very basic methods are available:
+<ul>
+<li>Introduce a lower bound on frequency of words</li>
+<li>Remove words that increase data sparsity</li></ul></p>
+<p>While there are other feature selection methods as well, such as the chi-squared test, they are suitable for Text Classification tasks rather than Exploratory Text Analysis tasks.</p>
+<p><b>Note: In this application, it is very important to reduce features to a number lower than 700 — i.e. words generate from a corpus must be reduced so that they are less than 700 in total. Exceeding or equalling this amount would be too computationally expensive and the computer may be brought to a standstill.</b></p>
+
+<hr>
+
+<h4> 5. Initial Analysis </h4>
+To enable basic Statistical analyses on corpus data, 2 graphical plots based on similar ideas are available in this section. These are the Rank-Frequency and Word-Frequency graphs. The former plots words ordered in rank against log(frequency) in order to observe if the distribution follows the <a href="http://en.wikipedia.org/wiki/Zipf's_law" target="_bank">Zipf's law</a>, while the latter simply shows the frequency distribution of the most frequent words.
+
+<hr>
+
+<h4> 7. Clustering Documents </h4>
+In addition to clustering words, it is insightful to cluster documents too, or to simply view how similar/dissimilar documents are based on words occurring in them. The intuition is that similar documents would have similar words, and this could be used to gain a rough idea about the number of topics being discussed in documents.
+<p>This application supports the projection of documents into a space using Multi-dimensional scaling; documents are presented as points and users can select the number of groups to be identified from the documents. Colours are assigned to documents depending on which cluster they belong to as per the k-means algorithm. The closer a document is placed to other documents, the higher its probability of containing similar content.</p>
+
+<p><em>Depending on the size of users' datasets, some time may be required before a graph is printed to the screen.</em></p>
+
+<hr>
+
+<h4> 6. Clustering Words </h4>
+This phase allows users to form clusters of words, both <a href="http://nlp.stanford.edu/IR-book/html/htmledition/flat-clustering-1.html" target="_blank">partitional</a> and <a href="http://nlp.stanford.edu/IR-book/html/htmledition/hierarchical-clustering-1.html" target="_blank">hierarchical</a>. For the former, users may first select the 'Quantile for Word Frequency', which means which quantile of the word frequencies they would wish to include in their analyses. The higher the quantile, the more frequent words would be included and others dropped. 
+<p>After this, users may select the number of groups they would like the k-means clustering algorithm to identify in their data. Such clusters are identified by different colours in the resulting Word cloud. Finally, a graph-drawing algorithm is to be selected which would plot words in a meaningful layout. The suitability of the Fruchterman-Reingold and Kamada-Kawai algorithms depends on the data being analysed, so users would have to experiment and see which better suits their needs.</p>
+<p>The resulting word cloud has been called an Associative Word cloud because words occurring in the same contexts are generally seen to be clustered in the same group. The idea was borrowed from Drew Conway's <a href="http://drewconway.com/zia/" target="_blank">website</a>.</p>
+<p>For hierarchical clustering, users may use the <a href="http://en.wikipedia.org/wiki/Dendrogram" target="_blank">Dendrogram</a> generation technique and again choose a lower bound for word frequencies, in order to reduce the number of words whose similarity/dissimilarity from others would be analysed. Currently, this application assumes that the method of calculating distances between our data is Euclidean, and that the clustering method is <a href="http://nlp.stanford.edu/IR-book/html/htmledition/group-average-agglomerative-clustering-1.html" target="_blank">Average-based clustering</a>.</p>
+
+<p><em>Depending on the size of users' datasets, some time may be required before an Associative Word Cloud or a Dendrogram are printed to the screen.</em></p>
+
+<hr>
+
+<h4> 8. Words Network Generation </h4>
+This is the final functionality provided by the application, and basically provides users with a network of words. As in the 6th Phase of Clustering Words, users have to select the quantile for word frequency and the graph-drawing algorithm to finally print a words' network.
+
+<p><em>Since this technique is the most computationally expensive of all techniques in this application, users are requested to be patient before the graph is printed.</em></p>

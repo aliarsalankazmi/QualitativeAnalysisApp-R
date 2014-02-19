@@ -15,48 +15,48 @@ shinyUI(pageWithSidebar(
 sidebarPanel(tags$h4("Phase Selection"),
 	br(),
 	selectInput("phase","Which phase would you like to choose?",
-			c("Introduction"="introduction",
+			c("User Guide"="userGuide",
 			"1. Importing Corpus"="import",
 			"2. Pre-processing"="preprocess",
 			"3. Feature Generation"="featureGenerate",
 			"4. Feature Selection"="featureSelect",
 			"5. Initial Analysis"="initialAnalysis",
-			"6. Clustering Words"="clusterWords",
-			"7. Cluster Documents"="clusterDocs",
+			"6. Cluster Documents"="clusterDocs",
+			"7. Clustering Words"="clusterWords",
 			"8. Words Network Generation"="wordNetworkGenerate",
-			"About"="about"),selected="Introduction"),
+			"About"="about"),selected="User Guide"),
 	br(),
 
-		conditionalPanel(
-			condition = "input.phase == 'import'",
-			wellPanel(tags$strong("Importing a Corpus"),
-			selectInput("corpusType","Select the type of Corpus?",
-					c("A directory of Text files"="dir",
-				  	  "A single Text file"="vector",
-					  "Sample corpus"="sample")),
-				conditionalPanel(
-					condition = "input.corpusType != 'sample'",
-					wellPanel(tags$strong("Upload your Corpus"),
-					textInput("filePath","Please enter the Directory/File path:"),
-					helpText(tags$strong("Note:"), "For Directories, use the following notation"),
-					helpText(tags$em("'My Documents/My Project/My Directory/'")),
-					helpText("For individual files, use the following notation"),
-					helpText(tags$em("'My Documents/My Project/My TextFile.txt'"))
-						)
-					),
-				conditionalPanel(
-					condition = "input.corpusType == 'sample'",
-					wellPanel(
-					radioButtons("sampleCorpus", "Select custom Corpus:",
-					c("UAE Expat Forum" = "UAEexpatForum",
-					  "UAE Trip Advisor" = "UAEtripAdvisor",
-					  "Middle East Politics" = "middleEastPolitics"))
-						)
-					),
-			br(),
-			actionButton("confirm","Upload Corpus")
-				)
-			),
+	conditionalPanel(
+		condition = "input.phase == 'import'",
+		wellPanel(tags$strong("Importing a Corpus"),
+		selectInput("corpusType","Select the type of Corpus?",
+				c("A directory of Text files"="dir",
+			  	  "A single Text file"="vector",
+				  "Sample corpora"="sample")),
+			conditionalPanel(
+				condition = "input.corpusType != 'sample'",
+				wellPanel(tags$strong("Upload your Corpus"),
+				textInput("filePath","Please enter the Directory/File path:"),
+				helpText(tags$strong("Note:"), "For Directories, use the following notation:"),
+				helpText(tags$em("'My Documents/My Project/My Directory/'")),
+				helpText("For individual files, use the following notation:"),
+				helpText(tags$em("'My Documents/My Project/My TextFile.txt'"))
+					)
+				),
+			conditionalPanel(
+				condition = "input.corpusType == 'sample'",
+				wellPanel(
+				radioButtons("sampleCorpus", "Select sample Corpus:",
+				c("UAE Expat Forum" = "UAEexpatForum",
+				  "UAE Trip Advisor" = "UAEtripAdvisor",
+				  "Middle East Politics" = "middleEastPolitics"))
+					)
+				),
+		br(),
+		actionButton("confirm","Upload Corpus")
+			)
+		),
 
 	conditionalPanel(
 		condition="input.phase=='preprocess'",
@@ -65,8 +65,19 @@ sidebarPanel(tags$h4("Phase Selection"),
 		checkboxInput("numbers","Numbers Removal",FALSE),
 		checkboxInput("stemming","Stem Words",FALSE),
 		checkboxInput("stopwords","Stopwords Removal",FALSE),
-		checkboxInput("customStop","Custom Stopwords",FALSE),
+		checkboxInput("customStopword","Custom Stopwords",FALSE),
+		conditionalPanel(
+			condition="input.customStopword",
+			#helpText("Please enter your stopwords separated by comma"),
+			textInput("cusStopwords","Please enter your stopwords separated by comma")
+				),
 		checkboxInput("customThes","Custom Thesaurus",FALSE),
+		conditionalPanel(
+			condition="input.customThes",
+			#helpText("Note: Please enter words separated by comma"),
+			textInput("customThesInitial","Please enter words separated by comma"),
+			textInput("customThesReplacement","Enter Replacement words")
+				),
 		br(),
 		actionButton("startPreprocess","Apply Pre-processing")
 			)
@@ -75,7 +86,7 @@ sidebarPanel(tags$h4("Phase Selection"),
 	conditionalPanel(
 		condition="input.phase=='featureGenerate'",
 		wellPanel(tags$strong("Feature Generation"),
-		radioButtons("termWeight","What is your Weighting Crietrion for Words?",
+		radioButtons("termWeight","What are your Weighting Crietria for Words?",
 				c("Word Frequency"="n",
 				  "Binary Frequency"="b",
 				  "Logarithmic Scaling of Frequency"="l",
@@ -120,6 +131,20 @@ sidebarPanel(tags$h4("Phase Selection"),
 		),
 
 
+
+	conditionalPanel(
+		condition="input.phase=='clusterDocs'",
+		wellPanel(tags$strong("Please select type of Clustering to perform"),
+		sliderInput("groupDocs","Select number of groups to identify",
+		min=1,max=8,value=1,ticks=TRUE),
+		actionButton("generateDocCluster","Generate Document Clusters"),
+		br(),
+		downloadButton("downloadDocCluster","Download Document Clusters")
+			)
+		),
+
+
+
 	conditionalPanel(
 		condition="input.phase=='clusterWords'",
 		wellPanel(tags$strong("Associative Word Clouds Generation"),
@@ -146,17 +171,6 @@ sidebarPanel(tags$h4("Phase Selection"),
 
 
 	conditionalPanel(
-		condition="input.phase=='clusterDocs'",
-		wellPanel(tags$strong("Please select type of Clustering to perform"),
-		actionButton("generateDocCluster","Generate Document Clusters"),
-		br(),
-		downloadButton("downloadDocCluster","Download Document Clusters")
-			)
-		),
-
-
-
-	conditionalPanel(
 		condition="input.phase=='wordNetworkGenerate'",
 		wellPanel(tags$strong("Words Network Generation"),
 		sliderInput("networkSize","Select Quantile for Word Frequency",
@@ -177,11 +191,11 @@ sidebarPanel(tags$h4("Phase Selection"),
 
 mainPanel(
 	tabsetPanel(id="tabset1",
-		tabPanel(title="Introduction",includeHTML("introduction.html")),
+		tabPanel(title="User Guide",includeHTML("introduction.html")),
 		tabPanel(title="Corpus Generation",verbatimTextOutput("corpusStatus"),verbatimTextOutput("procCorpusStatus"),verbatimTextOutput("initialuniMatrix"),verbatimTextOutput("finaluniMatrix")),
 		tabPanel(title="Initial Analysis",plotOutput("rankFreqPlot",width="auto"), plotOutput("wordFreqPlot",width="auto")),
-		tabPanel(title="Clustering Words", plotOutput("assocCloud",width="auto"), plotOutput("dendrogram", width="auto")), #plotOutput("phraseCloud",width="auto")),
 		tabPanel(title="Clustering Documents", plotOutput("docClusters",width="auto")),
+		tabPanel(title="Clustering Words", plotOutput("assocCloud",width="auto"), plotOutput("dendrogram", width="auto")),
 		tabPanel(title="Word Networks", plotOutput("wordNetwork",width="auto")),
 		tabPanel(title="About",includeHTML("about.html"))
 			)
