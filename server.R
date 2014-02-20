@@ -30,13 +30,9 @@
 #========================================================================================================================#
 ##============================ Section 1: Load libraries ==========================================================================##
 
-libraries<- c("tm","fastcluster","Snowball","ggplot2","RWeka","reshape2","RCurl","igraph")
-loadLib<- sapply(libraries, function(x) require(x,character.only=TRUE))
-if(all(loadLib)!=TRUE){
-unLoaded<- which(loadLib!=TRUE)
-install.packages(libraries[unLoaded],repos="http://cran.us.r-project.org")
-sapply(libraries[unLoaded],function(x) require(x,character.only=TRUE))
-}
+libraries<- c("shiny","tm","fastcluster","Snowball","ggplot2","RWeka","reshape2","RCurl","igraph")
+sapply(libraries, function(x) require(x,character.only=TRUE))
+
 
 
 
@@ -120,21 +116,21 @@ initialCorpus<- reactive({
 			if(input$confirm==0)
 			return()
 			isolate({
-				if(input$corpusType=="dirFile"){
+				if(input$corpusType=="dir"){
 					myPath<- input$filePath
-					myCorpus<- Corpus(DirSource(myPath),readerControl=list(language="english",reader=readPlain))
+					myCorpus<- Corpus(DirSource(myPath))
 					myCorpus
 					}
-				else if(input$corpusType=="singleFile"){
+				else if(input$corpusType=="vector"){
 					myPath<- input$filePath
-					myFile<- scan(file=myPath,what=character(0),n=-1, sep="\n")
-					myCorpus<- Corpus(VectorSource(myFile),readerControl=list(language="english",reader=readPlain))
+					myFile<- scan(file=myPath,what="character",n=-1, sep="\n")
+					myCorpus<- Corpus(VectorSource(myFile))
 					myCorpus
 					} 
 				else if(input$corpusType=="sample"){
-					myFile<- getURL(paste0(ghubURL,input$sampleCorpus,".txt"),ssl.verifypeer=FALSE)
+					myFile<- getURL(url=paste0(ghubURL,input$sampleCorpus,".txt"),ssl.verifypeer=FALSE)
 					txtFile<- scan(textConnection(myFile),sep="\n",what="character")
-					myCorpus<- Corpus(VectorSource(txtFile),readerControl=list(language="english",reader=readPlain))
+					myCorpus<- Corpus(VectorSource(txtFile))
 					myCorpus
 					}
 				})
