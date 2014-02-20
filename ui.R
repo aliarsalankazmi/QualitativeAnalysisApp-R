@@ -39,9 +39,9 @@ sidebarPanel(tags$h4("Phase Selection"),
 				wellPanel(tags$strong("Upload your Corpus"),
 				textInput("filePath","Please enter the Directory/File path:"),
 				helpText(tags$strong("Note:"), "For Directories, use the following notation:"),
-				helpText(tags$em("'My Documents/My Project/My Directory/'")),
+				helpText(tags$em("'My Drive://My Documents/My Project/My Directory/'")),
 				helpText("For individual files, use the following notation:"),
-				helpText(tags$em("'My Documents/My Project/My TextFile.txt'"))
+				helpText(tags$em("'My Drive://My Documents/My Project/My TextFile.txt'"))
 					)
 				),
 			conditionalPanel(
