@@ -31,29 +31,19 @@ sidebarPanel(tags$h4("Phase Selection"),
 		condition = "input.phase == 'import'",
 		wellPanel(tags$strong("Importing a Corpus"),
 		selectInput("corpusType","Select the type of Corpus?",
-				c("A directory of Text files"="dir",
-			  	  "A single Text file"="vector",
-				  "Sample corpora"="sample")),
+				c("Use Personal Corpus"="user",
+				  "Use Sample Corpus"="sample")),
 			conditionalPanel(
-				condition = "input.corpusType != 'sample'",
-				wellPanel(tags$strong("Upload your Corpus"),
-				textInput("filePath","Please enter the Directory/File path:"),
-				helpText(tags$strong("Note:"), "For Directories, use the following notation:"),
-				helpText(tags$em("'My Drive://My Documents/My Project/My Directory/'")),
-				helpText("For individual files, use the following notation:"),
-				helpText(tags$em("'My Drive://My Documents/My Project/My TextFile.txt'"))
-					)
-				),
+				condition = "input.corpusType == 'user'",
+				fileInput("myPath","",multiple=TRUE)
+					),
 			conditionalPanel(
 				condition = "input.corpusType == 'sample'",
-				wellPanel(
 				radioButtons("sampleCorpus", "Select sample Corpus:",
 				c("UAE Expat Forum" = "UAEexpatForum",
 				  "UAE Trip Advisor" = "UAEtripAdvisor",
 				  "Middle East Politics" = "middleEastPolitics"))
-					)
-				),
-		br(),
+					),
 		actionButton("confirm","Upload Corpus")
 			)
 		),
@@ -120,11 +110,15 @@ sidebarPanel(tags$h4("Phase Selection"),
 		condition="input.phase=='initialAnalysis'",
 		wellPanel(tags$strong("Initial Analysis"),
 		br(),
+		br(),
 		actionButton("generateRankFreq","Generate Rank-Frequency Plot"),
+		br(),
 		br(),
 		downloadButton("downloadRankFreqPlot","Download Rank-Frequency Plot"),
 		br(),
+		br(),
 		actionButton("generateWordFreq","Generate Word-Frequency Plot"),
+		br(),
 		br(),
 		downloadButton("downloadWordFreqPlot","Download Word Frequency Plot")
 			)
