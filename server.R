@@ -97,6 +97,12 @@ return(finalCorpus)
 
 
 
+#======= Cosine similarity function for checking document similarity
+
+cosineDist<- function(x){
+x %*% t(x) / sqrt(rowSums(x^2) %*% t(rowSums(x^2))) }
+
+
 #======= Access my GitHub url for loading datasets
 
 ghubURL<- "https://raw2.github.com/noobuseR/Datasets/master/"
