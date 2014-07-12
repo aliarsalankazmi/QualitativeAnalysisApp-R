@@ -30,16 +30,17 @@
 #========================================================================================================================#
 ##============================ Section 0: Load libraries ==========================================================================##
 
-library(shiny)
-library(tm)
-library(fastcluster)
-library(Snowball)
-library(ggplot2)
-library(RWeka)
-library(reshape2)
-library(RCurl)
-library(igraph)
-
+require(shiny)
+require(tm)
+require(fastcluster)
+require(Snowball)
+require(ggplot2)
+require(RWeka)
+require(reshape2)
+require(RCurl)
+require(igraph)
+require(parallel)
+require(topicmodels)
 
 
 #============================= Build required functions
