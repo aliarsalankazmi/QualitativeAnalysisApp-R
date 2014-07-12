@@ -349,27 +349,63 @@ output$downloadWordFreqPlot<- downloadHandler(
 ##===================================  Section 5: Clustering Documents =============================================================##
 
 
-mdsDocClustering<- reactive({
-				if(input$generateDocCluster==0)
-				return()
-				isolate({
-					distMatrix<- dist(t(finalUnigramMatrix()))
-					mdsPoints<- cmdscale(d=distMatrix,eig=TRUE)
-					kClusters<- kmeans(t(finalUnigramMatrix()),centers=input$groupDocs,nstart=30)
-					clusterData<- data.frame(docNumber=colnames(finalUnigramMatrix()),x=mdsPoints$points[,1],y=mdsPoints$points[,2],cluster=kClusters$cluster)
-					ggplot(data=clusterData,aes(x=x,y=y)) + geom_point(aes(alpha=.2)) + geom_text(aes(label=docNumber,colour=as.factor(cluster),size=2)) +
-					ggtitle("Clustering Documents") + scale_size(guide="none") + scale_colour_brewer(palette="Dark2",name="Document Groups") + 
-					scale_alpha(guide="none") + theme(axis.ticks=element_blank()) + xlab("") + ylab("") + 
-					scale_x_continuous(breaks=c(min(clusterData$x),max(clusterData$x)),labels=c("","")) +
-					scale_y_continuous(breaks=c(min(clusterData$y),max(clusterData$y)),labels=c("",""))
-					})
+lowerFreqRangeClust<- reactive({
+			corpus<- preprocessedCorpus()
+			tdMat<- TermDocumentMatrix(corpus)
+			rowTotals<- rowSums(as.matrix(tdMat))
+			freqBounds<- range(rowTotals)
+			rm(corpus,tdMat,rowTotals)
+			return(freqBounds)
+		})
+
+output$lowerFreqSliderClust<- renderUI({
+					sliderInput("lowerFreqBoundClust","Please set the Lower Bound for Word Frequency",
+					min=round(lowerFreqRangeClust()[1],max=round(lowerFreqRangeClust()[2],
+					value=round(lowerFreqRangeClust()[1]),step=NULL,ticks=TRUE)
+		})
+
+
+clusterDf<- reactive({
+			if(input$generateDocCluster==0)
+			return()
+			isolate({
+				corpus<- preprocessedCorpus()
+
+				tdMat<- TermDocumentMatrix(corpus)
+				lowerBound<- findFreqTerms(tdMat,round(input$lowerFreqBound),inf)
+				TdMat<- tdMat[lowerBound,]
+				finalTdMat<- as.matrix(TdMat)
+
+				cosSimilarity<- cosineDist(t(finalTdMat))
+				distMat<- as.dist(1-cosSimilarity)
+				distMat[is.nan(distMat)] <- 2
+				mdsPoints<- cmdscale(distMat)
+
+				k<- input$groupDocs
+				kClusters<- kmeans(mdsPoints,centers=k, nstart=50)
+				clusterData<- data.frame(docNumber=colNames(tdMat),x=mdsPoints[,1],y=mdsPoints[,2],cluster=kClusters$cluster)
+				return(clusterData)
 			})
-					
+		})
+		
+docClustering<- reactive({
+			if(input$generateDocCluster==0)
+			return()
+			isolate({
+				clusterData<- clusterDf()
+				ggplot(data=clusterData,aes(x=x,y=y)) + geom_point(aes(alpha=.2)) + geom_text(aes(label=docNumber,colour=as.factor(cluster),size=2)) +
+				ggtitle("Clustering Documents") + scale_size(guide="none") + scale_colour_brewer(palette="Dark2",name="Document Groups") + 
+				scale_alpha(guide="none") + theme(axis.ticks=element_blank()) + xlab("") + ylab("") + 
+				scale_x_continuous(breaks=c(min(clusterData$x),max(clusterData$x)),labels=c("","")) +
+				scale_y_continuous(breaks=c(min(clusterData$y),max(clusterData$y)),labels=c("",""))
+			})
+		})
+		
 
 output$docClusters<- renderPlot({
 				if(input$generateDocCluster==0)
 				return()
-				print(mdsDocClustering())
+				print(docClustering())
 			})
 
 output$downloadDocCluster<- downloadHandler(
