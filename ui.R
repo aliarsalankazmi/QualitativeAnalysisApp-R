@@ -128,9 +128,12 @@ sidebarPanel(tags$h4("Phase Selection"),
 
 	conditionalPanel(
 		condition="input.phase=='clusterDocs'",
-		wellPanel(tags$strong("Please select type of Clustering to perform"),
+		wellPanel(tags$strong("Clusters and Topics Identification"),
+		uiOutput("lowerFreqSliderClust"),
 		sliderInput("groupDocs","Select number of groups to identify",
 		min=1,max=8,value=1,ticks=TRUE),
+		sliderInput("topicNumbers","Select number of topics to identify",
+		min=1,max=15,value=1,ticks=TRUE),
 		actionButton("generateDocCluster","Generate Document Clusters"),
 		br(),
 		downloadButton("downloadDocCluster","Download Document Clusters")
