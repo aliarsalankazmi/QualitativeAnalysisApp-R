@@ -33,7 +33,7 @@
 require(shiny)
 require(tm)
 require(fastcluster)
-require(Snowball)
+#require(Snowball)
 require(ggplot2)
 require(RWeka)
 require(reshape2)
@@ -422,7 +422,7 @@ docClustering<- reactive({
 		})
 		
 		
-topicModels<- reactive({
+topicModels<- renderPrint({
 			if(input$generateDocCluster==0)
 			return()
 			isolate({
