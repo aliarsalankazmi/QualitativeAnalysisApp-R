@@ -94,6 +94,7 @@ sidebarPanel(tags$h4("Phase Selection"),
 			)
 		),
 
+
 	conditionalPanel(
 		condition="input.phase=='featureSelect'",
 		wellPanel(tags$strong("Feature Selection"),
