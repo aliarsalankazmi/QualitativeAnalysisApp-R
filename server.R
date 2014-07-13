@@ -389,7 +389,7 @@ clusterDf<- reactive({
 				corpus<- preprocessedCorpus()
 
 				tdMat<- TermDocumentMatrix(corpus)
-				lowerBound<- findFreqTerms(tdMat,round(input$lowerFreqBound),inf)
+				lowerBound<- findFreqTerms(tdMat,round(input$lowerFreqBoundClust),inf)
 				TdMat<- tdMat[lowerBound,]
 				finalTdMat<- as.matrix(TdMat)
 
@@ -435,7 +435,7 @@ topicModels<- renderPrint({
 
 				for (i in 1:length(cDtm)){
 					cDtm2[[i]]<- cDtm[[i]][rowTotals[[i]]>0,]}
-				topicModel<- mclapply(cDtm2,FUN=function(x)LDA(x,k=10))
+				topicModel<- mclapply(cDtm2,FUN=function(x)LDA(x,k=input$topicNumbers))
 				detectedTerms<- lapply(topicModel,function(x)terms(x,k=10,threshold=.5))
 				rm(clusterData,corpus,clusteredDocs,cDtm,rowTotals,cDtm2)
 				return(detectedTerms)
