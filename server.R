@@ -428,7 +428,7 @@ topicModels<- renderPrint({
 			isolate({
 				clusterData<- clusterDf()
 				corpus<- preprocessedCorpus()
-				clusteredDocs<- split(corpus,as.factor(clusterData$cluster)
+				clusteredDocs<- split(corpus,as.factor(clusterData$cluster))
 				cDtm<- lapply(clusteredDocs,function(x)DocumentTermMatrix(x))
 				rowTotals<- lapply(cDtm,function(x)rowSums(as.matrix(x)))
 				cDtm2<- cDtm
