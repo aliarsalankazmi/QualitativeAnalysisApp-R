@@ -133,13 +133,17 @@ initialCorpus<- reactive({
 					userUpload<- reactive({ input$myPath })
 					filePath<- userUpload()$datapath
 					myData<- unlist(lapply(filePath,function(x)scan(file=x,what="character",sep="\n")))
-					myCorpus<- Corpus(VectorSource(myData)) 
+					myCorpus<- Corpus(VectorSource(myData))
+					return(myCorpus)
 					}
 				else{
 					myFile<- getURL(url=paste0(ghubURL,input$sampleCorpus,".txt"),ssl.verifypeer=FALSE)
 					txtFile<- scan(textConnection(myFile),sep="\n",what="character")
-					myCorpus<- Corpus(VectorSource(txtFile))	} })
-			return(myCorpus) })
+					myCorpus<- Corpus(VectorSource(txtFile))
+					return(myCorpus)
+					} 
+			})
+		})
 
 
 output$corpusStatus<- renderPrint({
@@ -147,7 +151,7 @@ output$corpusStatus<- renderPrint({
 				return("No Corpus selection made yet")
 				isolate({
 					initialCorpus() })
-			})
+		})
 
 	
 
@@ -169,16 +173,19 @@ preprocessedCorpus<- reactive({
 					stem=input$stemming,removePunct=input$punctuation,removeNum=input$numbers,useSynonyms=input$customThes,
 					useCustomStopwords=input$customStopword,initialWords=input$customThesInitial,
 					replacementWords=input$customThesReplacement,customStopwords=input$cusStopwords)
-					return(newCorpus) })
+					rm(originalCorpus)
+					return(newCorpus) 
 			})
+		})
 
 
 output$procCorpusStatus<- renderPrint({
 					if(input$startPreprocess==0)
 					return("No pre-processing applied on Corpus")
 					isolate({
-						preprocessedCorpus() })
+						preprocessedCorpus() 
 			})
+		})
 
 
 
@@ -192,21 +199,28 @@ output$procCorpusStatus<- renderPrint({
 initialUnigramMatrix<- reactive({
 				if(input$generateMatrix==0)
 				return()
-				corpus<- preprocessedCorpus()
 				isolate({
+					corpus<- preprocessedCorpus()
 					weightingScheme<- paste0(input$termWeight,input$docWeight,input$normalisation)
 					initialMatrix<- TermDocumentMatrix(corpus,
 								control=list(weighting=function(x) weightSMART(x,spec=weightingScheme)))
-					return(initialMatrix) }) })
+					rm(corpus)
+					return(initialMatrix) 
+			})
+		})
+
 
 lowerFreqRange<- reactive({
 			myMatrix<- initialUnigramMatrix()
 			freq<- rowSums(as.matrix(myMatrix))
-			range(freq) })
+			range(freq)
+		})
+
 
 output$lowerFreqSlider<- renderUI({
 				sliderInput("lowerFreqBound","Please set the Lower Bound for Frequency",
-				min=round(lowerFreqRange()[1]),max=round(lowerFreqRange()[2]),value=round(lowerFreqRange()[1]),step=NULL,ticks=TRUE) })
+				min=round(lowerFreqRange()[1]),max=round(lowerFreqRange()[2]),value=round(lowerFreqRange()[1]),step=NULL,ticks=TRUE)
+		})
 
 finalUnigramMatrix<- reactive({
 				if(input$selectFeatures==0)
@@ -218,12 +232,16 @@ finalUnigramMatrix<- reactive({
 						finalUnigramMatrix<- finalUnigramMatrix[lowerBound]}
 					if(input$sparsity!=100){
 						finalUnigramMatrix<- removeSparseTerms(finalUnigramMatrix,sparse=(input$sparsity/100))}
-					return(finalUnigramMatrix) }) })
+					return(finalUnigramMatrix) 
+			})
+		})
 
 lowerFreqRangeDendro<- reactive({
 					myMatrix<- finalUnigramMatrix()
 					freq<- rowSums(as.matrix(myMatrix))
-					range(freq) })
+					rm(myMatrix)
+					range(freq)
+		})
 
 output$lowerFreqSliderDendro<- renderUI({
 					sliderInput("dendroSize","Set Word Frequency lower bound",
@@ -240,6 +258,7 @@ initialDf<- reactive({
 				words<- rownames(myMat)
 				freq<- rowSums(myMat)
 				myDf<- data.frame(words=words,freq=freq,stringsAsFactors=FALSE) 
+				rm(myMat,words,freq)
 				return(myDf)
 			})
 		})
@@ -289,12 +308,7 @@ output$downloadRankFreqPlot<- downloadHandler(
 					print(rankFrequencyPlot())
 					dev.off()
 		})
-				
-
-
-
-
-
+			
 
 wordFrequencyPlot<- reactive({
 				if(input$generateWordFreq==0)
@@ -423,6 +437,7 @@ topicModels<- reactive({
 					cDtm2[[i]]<- cDtm[[i]][rowTotals[[i]]>0,]}
 				topicModel<- mclapply(cDtm2,FUN=function(x)LDA(x,k=10))
 				detectedTerms<- lapply(topicModel,function(x)terms(x,k=10,threshold=.5))
+				rm(clusterData,corpus,clusteredDocs,cDtm,rowTotals,cDtm2)
 				return(detectedTerms)
 			})
 		})
