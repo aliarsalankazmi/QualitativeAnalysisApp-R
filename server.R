@@ -227,7 +227,8 @@ lowerFreqRangeDendro<- reactive({
 
 output$lowerFreqSliderDendro<- renderUI({
 					sliderInput("dendroSize","Set Word Frequency lower bound",
-					min=round(lowerFreqRangeDendro()[1]),max=round(lowerFreqRangeDendro()[2]),value=round(lowerFreqRangeDendro()[1]),step=NULL,ticks=TRUE) })
+					min=round(lowerFreqRangeDendro()[1]),max=round(lowerFreqRangeDendro()[2]),value=round(lowerFreqRangeDendro()[1]),step=NULL,ticks=TRUE) 
+		})
 
 
 
@@ -239,19 +240,21 @@ initialDf<- reactive({
 				words<- rownames(myMat)
 				freq<- rowSums(myMat)
 				myDf<- data.frame(words=words,freq=freq,stringsAsFactors=FALSE) 
-				myDf }) })
+				return(myDf)
+			})
+		})
 
 output$initialuniMatrix<- renderPrint({ 
 				if(input$generateMatrix==0)
 				return("No Term-Document matrix constituted of single words available at the moment")
 				isolate ({ initialUnigramMatrix() })
-			})
+		})
 
 output$finaluniMatrix<- renderPrint({
 				if(input$selectFeatures==0)
 				return("No Feature Selection procedure applied at the moment")
 				isolate ({ finalUnigramMatrix() })
-			})
+		})
 					
 
 
@@ -270,14 +273,14 @@ rankFrequencyPlot<- reactive({
 					myDf<- transform(myDf,rank=seq_along(myDf$freq)) 
 					ggplot(data=myDf,aes(x=log10(rank),y=log10(freq))) + geom_text(aes(label=words,size=3,angle=45)) +
 					xlab("Words' Rank") + ylab("Frequency in Log scale") + scale_size(guide="none") + ggtitle("Rank-Frequency Plot")
-					})
-			})
+				})
+		})
 
 output$rankFreqPlot<- renderPlot({
 				if(input$generateRankFreq==0)
 				return()
 				print(rankFrequencyPlot())
-			})
+		})
 
 output$downloadRankFreqPlot<- downloadHandler(
 				filename=function(){paste0("RankFrequencyPlot",Sys.time(),".pdf")},
@@ -285,7 +288,7 @@ output$downloadRankFreqPlot<- downloadHandler(
 					pdf(file, width=14,height=12)
 					print(rankFrequencyPlot())
 					dev.off()
-			})
+		})
 				
 
 
@@ -323,14 +326,14 @@ wordFrequencyPlot<- reactive({
 					}
 					ggplot(data=myDfNew,aes(x=words,y=freq)) + geom_bar(stat="Identity") + xlab("Words") + ylab("Frequency") + 
 					ggtitle("Most Frequent Words") + theme(axis.text.x=element_text(angle=90,hjust=1))
-					})
-			})
+				})
+		})
 
 output$wordFreqPlot<- renderPlot({
 				if(input$generateWordFreq==0)
 				return()
 				print(wordFrequencyPlot())
-			})
+		})
 
 output$downloadWordFreqPlot<- downloadHandler(
 					filename=function(){paste0("WordFrequencyPlot",Sys.time(),".pdf")},
@@ -338,7 +341,7 @@ output$downloadWordFreqPlot<- downloadHandler(
 					pdf(file,width=14,height=12)
 					print(wordFrequencyPlot())
 					dev.off()
-			})
+		})
 
 
 
@@ -384,9 +387,12 @@ clusterDf<- reactive({
 				k<- input$groupDocs
 				kClusters<- kmeans(mdsPoints,centers=k, nstart=50)
 				clusterData<- data.frame(docNumber=colNames(tdMat),x=mdsPoints[,1],y=mdsPoints[,2],cluster=kClusters$cluster)
+				
+				rm(tdMat,TdMat,cosSimilarity,distMat,mdsPoints,kClusters)
 				return(clusterData)
 			})
 		})
+		
 		
 docClustering<- reactive({
 			if(input$generateDocCluster==0)
@@ -401,12 +407,32 @@ docClustering<- reactive({
 			})
 		})
 		
+		
+topicModels<- reactive({
+			if(input$generateDocCluster==0)
+			return()
+			isolate({
+				clusterData<- clusterDf()
+				corpus<- preprocessedCorpus()
+				clusteredDocs<- split(corpus,as.factor(clusterData$cluster)
+				cDtm<- lapply(clusteredDocs,function(x)DocumentTermMatrix(x))
+				rowTotals<- lapply(cDtm,function(x)rowSums(as.matrix(x)))
+				cDtm2<- cDtm
+
+				for (i in 1:length(cDtm)){
+					cDtm2[[i]]<- cDtm[[i]][rowTotals[[i]]>0,]}
+				topicModel<- mclapply(cDtm2,FUN=function(x)LDA(x,k=10))
+				detectedTerms<- lapply(topicModel,function(x)terms(x,k=10,threshold=.5))
+				return(detectedTerms)
+			})
+		})
+		
 
 output$docClusters<- renderPlot({
 				if(input$generateDocCluster==0)
 				return()
 				print(docClustering())
-			})
+		})
 
 output$downloadDocCluster<- downloadHandler(
 					filename=function(){paste0("DocClusters",Sys.time(),".pdf")},
@@ -414,7 +440,7 @@ output$downloadDocCluster<- downloadHandler(
 						pdf(file,width=14,height=12)
 						print(mdsDocClustering())
 						dev.off()
-			})
+		})
 
 
 
@@ -440,14 +466,14 @@ dendroGraphic<- reactive({
 				distMat<- dist(scale(mainMat))
 				dendro<- hclust(distMat,method="average")
 				plot(dendro)
-				})
 			})
+		})
  
 output$dendrogram<- renderPlot({ 
 				if(input$generateDendro==0)
 				return()
 				print(dendroGraphic())
-			})
+		})
 
 output$downloadDendro<- downloadHandler(
 					filename=function(){paste0("Dendrogram",Sys.time(),".pdf")},
@@ -455,7 +481,7 @@ output$downloadDendro<- downloadHandler(
 					pdf(file,width=14,height=12)
 					print(dendroGraphic())
 					dev.off()
-			})
+		})
 
 			
 
@@ -485,14 +511,14 @@ associativeCloud<- reactive({
 					theme_bw() + scale_colour_brewer(palette="Dark2",guide="none") + scale_size("Word Frequency") + scale_alpha("Overall Importance of Word",range=c(0.4,1),guide="none") +
 					scale_x_continuous(breaks=c(min(wordsDf$x.pos),max(wordsDf$x.pos)),labels=c("","")) + scale_y_continuous(breaks=c(min(wordsDf$y.pos),max(wordsDf$y.pos)),labels=c("","")) +
 					theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank(),axis.ticks=element_blank())
-				})
-			})	
+			})
+		})	
 
 output$assocCloud<- renderPlot({
 				if(input$generateAssoc==0)
 				return()
 				print(associativeCloud())
-			})
+		})
 
 output$downloadAssoc<- downloadHandler(
 				filename=function(){paste0("AssocWordCloud",Sys.time(),".pdf")},
@@ -500,7 +526,7 @@ output$downloadAssoc<- downloadHandler(
 					pdf(file,width=14,height=12)
 					print(associativeCloud())
 					dev.off()
-			})
+		})
 
 
 
@@ -579,14 +605,14 @@ wordNetworkGraph<- reactive({
 							scale_x_continuous(breaks=c(min(finalDf$x.pos),max(finalDf$x.pos)),labels=c("","")) +
 							scale_y_continuous(breaks=c(min(finalDf$y.pos),max(finalDf$y.pos)),labels=c("","")) +
 							theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank(),axis.ticks=element_blank()) } 
-					})
-			})
+				})
+		})
 
 output$wordNetwork<- renderPlot({
 				if(input$generateNetwork==0)
 				return()
 				print(wordNetworkGraph())
-			})
+		})
 
 output$downloadNetwork<- downloadHandler(
 				filename=function(){paste0("wordsNetwork",Sys.time(),".pdf")},
@@ -594,7 +620,7 @@ output$downloadNetwork<- downloadHandler(
 					pdf(file,width=16,height=12)
 					print(wordNetworkGraph())
 					dev.off()
-			})
+		})
 
 
 
