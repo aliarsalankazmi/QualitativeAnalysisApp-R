@@ -377,7 +377,7 @@ lowerFreqRangeClust<- reactive({
 
 output$lowerFreqSliderClust<- renderUI({
 					sliderInput("lowerFreqBoundClust","Please set the Lower Bound for Word Frequency",
-					min=round(lowerFreqRangeClust()[1],max=round(lowerFreqRangeClust()[2],
+					min=round(lowerFreqRangeClust()[1]),max=round(lowerFreqRangeClust()[2]),
 					value=round(lowerFreqRangeClust()[1]),step=NULL,ticks=TRUE)
 		})
 
