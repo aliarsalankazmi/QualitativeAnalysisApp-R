@@ -389,7 +389,7 @@ clusterDf<- reactive({
 				corpus<- preprocessedCorpus()
 
 				tdMat<- TermDocumentMatrix(corpus)
-				lowerBound<- findFreqTerms(tdMat,round(input$lowerFreqBoundClust),inf)
+				lowerBound<- findFreqTerms(tdMat,round(input$lowerFreqBoundClust),Inf)
 				TdMat<- tdMat[lowerBound,]
 				finalTdMat<- as.matrix(TdMat)
 
