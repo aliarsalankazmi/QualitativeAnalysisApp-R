@@ -39,6 +39,7 @@ require(reshape2)
 require(RCurl)
 require(igraph)
 require(parallel)
+require(gsl)
 require(topicmodels)
 
 
