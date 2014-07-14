@@ -192,7 +192,7 @@ mainPanel(
 		tabPanel(title="User Guide",includeHTML("introduction.html")),
 		tabPanel(title="Corpus Generation",verbatimTextOutput("corpusStatus"),verbatimTextOutput("procCorpusStatus"),verbatimTextOutput("initialuniMatrix"),verbatimTextOutput("finaluniMatrix")),
 		tabPanel(title="Initial Analysis",plotOutput("rankFreqPlot",width="auto"), plotOutput("wordFreqPlot",width="auto")),
-		tabPanel(title="Clustering Documents", plotOutput("docClusters",width="auto")),
+		tabPanel(title="Clustering Documents", plotOutput("docClusters",width="auto"), verbatimTextOutput("topicModels")),
 		tabPanel(title="Clustering Words", plotOutput("assocCloud",width="auto"), plotOutput("dendrogram", width="auto")),
 		tabPanel(title="Word Networks", plotOutput("wordNetwork",width="auto")),
 		tabPanel(title="About",includeHTML("about.html"))
