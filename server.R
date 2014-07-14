@@ -229,7 +229,7 @@ finalUnigramMatrix<- reactive({
 					finalUnigramMatrix<- initialUnigramMatrix()
 					if(input$lowerFreqBound!=lowerFreqRange()[1]){
 						lowerBound<- findFreqTerms(finalUnigramMatrix,round(input$lowerFreqBound),Inf)
-						finalUnigramMatrix<- finalUnigramMatrix[lowerBound]}
+						finalUnigramMatrix<- finalUnigramMatrix[lowerBound,]}
 					if(input$sparsity!=100){
 						finalUnigramMatrix<- removeSparseTerms(finalUnigramMatrix,sparse=(input$sparsity/100))}
 					return(finalUnigramMatrix) 
