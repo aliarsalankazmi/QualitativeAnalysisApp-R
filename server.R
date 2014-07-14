@@ -422,7 +422,7 @@ docClustering<- reactive({
 		})
 		
 		
-topicModels<- renderPrint({
+output$topicModels<- renderPrint({
 			if(input$generateDocCluster==0)
 			return("No topics identified yet")
 			isolate({
