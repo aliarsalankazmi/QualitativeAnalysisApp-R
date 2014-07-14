@@ -33,7 +33,6 @@
 require(shiny)
 require(tm)
 require(fastcluster)
-#require(Snowball)
 require(ggplot2)
 require(RWeka)
 require(reshape2)
