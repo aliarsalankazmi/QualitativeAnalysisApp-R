@@ -400,7 +400,7 @@ clusterDf<- reactive({
 
 				k<- input$groupDocs
 				kClusters<- kmeans(mdsPoints,centers=k, nstart=50)
-				clusterData<- data.frame(docNumber=colNames(tdMat),x=mdsPoints[,1],y=mdsPoints[,2],cluster=kClusters$cluster)
+				clusterData<- data.frame(docNumber=colnames(tdMat),x=mdsPoints[,1],y=mdsPoints[,2],cluster=kClusters$cluster)
 				
 				rm(tdMat,TdMat,cosSimilarity,distMat,mdsPoints,kClusters)
 				return(clusterData)
