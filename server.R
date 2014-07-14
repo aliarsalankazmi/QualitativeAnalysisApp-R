@@ -50,7 +50,7 @@ require(topicmodels)
 cleanSweepCorpus<- function(corpus, useStopwords=FALSE, stem=FALSE,removePunct=FALSE,removeNum=FALSE,useSynonyms=FALSE,
 				initialWords,replacementWords,useCustomStopwords=FALSE,customStopwords){
 newCorpus<- corpus
-newCorpus<- tolower(newCorpus)
+newCorpus<- sapply(newCorpus,function(x)tolower(x))
 newCorpus<- gsub("[\\)(\"]"," ",newCorpus)
 if(useStopwords != FALSE){
 	englishStopwords<- c(stopwords("SMART"),stopwords("english"))
