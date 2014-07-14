@@ -424,7 +424,7 @@ docClustering<- reactive({
 		
 topicModels<- renderPrint({
 			if(input$generateDocCluster==0)
-			return()
+			return("No topics identified yet")
 			isolate({
 				clusterData<- clusterDf()
 				corpus<- preprocessedCorpus()
@@ -439,7 +439,7 @@ topicModels<- renderPrint({
 				detectedTerms<- lapply(topicModel,function(x)terms(x,k=10,threshold=.5))
 				names(detectedTerms)<- paste("Document Group",seq_along(detectedTerms))
 				rm(clusterData,corpus,clusteredDocs,cDtm,rowTotals,cDtm2)
-				return(detectedTerms)
+				detectedTerms
 			})
 		})
 		
