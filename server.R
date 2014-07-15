@@ -21,7 +21,8 @@
 #Contains code used for performing basic word clustering, both hierarchical and partitional
 
 ##> Section 6: Clustering Documents
-#Contains code used for performing very basic Information retrieval
+#Contains code used for performing basic document clustering based on the VectorSpace model and utilising the cosine distance.
+#The k-means method of clustering has been used, along with Topic models, to cluster documents, and identify their topics.
 
 ##> Section 7: Word Networks
 #Contains code for generating graphs that look a network of words
