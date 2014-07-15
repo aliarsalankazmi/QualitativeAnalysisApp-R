@@ -437,7 +437,7 @@ output$topicModels<- renderPrint({
 				for (i in 1:length(cDtm)){
 					cDtm2[[i]]<- cDtm[[i]][rowTotals[[i]]>0,]}
 				topicModel<- mclapply(cDtm2,FUN=function(x)LDA(x,k=input$topicNumbers))
-				detectedTerms<- lapply(topicModel,function(x)terms(x,k=10,threshold=.5))
+				detectedTerms<- lapply(topicModel,function(x)terms(x,k=10))
 				names(detectedTerms)<- paste("Document Group",seq_along(detectedTerms))
 				rm(clusterData,corpus,clusteredDocs,cDtm,rowTotals,cDtm2)
 				detectedTerms
