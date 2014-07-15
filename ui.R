@@ -1,19 +1,21 @@
 ###load the necessary package###
 
 require(shiny)
+require(shinyIncubator)
 
 ###select type of page to be created###
 
 shinyUI(pageWithSidebar(
 			headerPanel(
-			#HTML('<div id="header"><img src="http://www.norfolk-pcc.gov.uk/wp-content/uploads/2013/10/OfficePCCforNorfolkLogo_Blue.png" alt="OPCC,Norfolk"/></div>'),
 			"Exploratory Qualitative Analysis with R",
 			windowTitle="Exploring Textual Data with R"),
+
 
 ###select configuration for sidebarPanel###
 
 sidebarPanel(tags$h4("Phase Selection"),
 	br(),
+	progressInit(),
 	selectInput("phase","Which phase would you like to choose?",
 			c("User Guide"="userGuide",
 			"1. Importing Corpus"="import",
