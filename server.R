@@ -42,6 +42,7 @@ require(igraph)
 require(parallel)
 require(gsl)
 require(topicmodels)
+require(shinyIncubator)
 
 
 #============================= Build required functions
@@ -150,8 +151,12 @@ initialCorpus<- reactive({
 output$corpusStatus<- renderPrint({
 				if(input$confirm==0)
 				return("No Corpus selection made yet")
-				isolate({
-					initialCorpus() })
+				withProgress(session, {
+					setProgress(message="Uploading your corpus...")
+					isolate({
+						initialCorpus() 
+				})
+			})
 		})
 
 	
@@ -183,8 +188,11 @@ preprocessedCorpus<- reactive({
 output$procCorpusStatus<- renderPrint({
 					if(input$startPreprocess==0)
 					return("No pre-processing applied on Corpus")
-					isolate({
-						preprocessedCorpus() 
+					withProgress(session,{
+						setProgress(message="Processing your corpus...")
+						isolate({
+							preprocessedCorpus() 
+				})
 			})
 		})
 
@@ -267,13 +275,21 @@ initialDf<- reactive({
 output$initialuniMatrix<- renderPrint({ 
 				if(input$generateMatrix==0)
 				return("No Term-Document matrix constituted of single words available at the moment")
-				isolate ({ initialUnigramMatrix() })
+				withProgress(session, {
+					setProgress(message="Calculating your Term Document Matrix...")
+					isolate ({ initialUnigramMatrix() 
+				})
+			})
 		})
 
 output$finaluniMatrix<- renderPrint({
 				if(input$selectFeatures==0)
 				return("No Feature Selection procedure applied at the moment")
-				isolate ({ finalUnigramMatrix() })
+				withProgress(session, {
+					setProgress(message="Applying Feature Selection procedures...")
+					isolate ({ finalUnigramMatrix() 
+				})
+			})
 		})
 					
 
@@ -293,13 +309,16 @@ rankFrequencyPlot<- reactive({
 					myDf<- transform(myDf,rank=seq_along(myDf$freq)) 
 					ggplot(data=myDf,aes(x=log10(rank),y=log10(freq))) + geom_text(aes(label=words,size=3,angle=45)) +
 					xlab("Words' Rank") + ylab("Frequency in Log scale") + scale_size(guide="none") + ggtitle("Rank-Frequency Plot")
-				})
+			})
 		})
 
 output$rankFreqPlot<- renderPlot({
 				if(input$generateRankFreq==0)
 				return()
+					withProgress(session, {
+					setProgress(message="Plotting your graph...")
 				print(rankFrequencyPlot())
+			})
 		})
 
 output$downloadRankFreqPlot<- downloadHandler(
@@ -341,13 +360,16 @@ wordFrequencyPlot<- reactive({
 					}
 					ggplot(data=myDfNew,aes(x=words,y=freq)) + geom_bar(stat="Identity") + xlab("Words") + ylab("Frequency") + 
 					ggtitle("Most Frequent Words") + theme(axis.text.x=element_text(angle=90,hjust=1))
-				})
+			})
 		})
 
 output$wordFreqPlot<- renderPlot({
 				if(input$generateWordFreq==0)
 				return()
+				withProgress(session, {
+					setProgress(message="Plotting your graph...")
 				print(wordFrequencyPlot())
+			})
 		})
 
 output$downloadWordFreqPlot<- downloadHandler(
@@ -426,21 +448,24 @@ docClustering<- reactive({
 output$topicModels<- renderPrint({
 			if(input$generateDocCluster==0)
 			return("No topics identified yet")
-			isolate({
-				clusterData<- clusterDf()
-				corpus<- preprocessedCorpus()
-				clusteredDocs<- split(corpus,as.factor(clusterData$cluster))
-				cDtm<- lapply(clusteredDocs,function(x)DocumentTermMatrix(x))
-				rowTotals<- lapply(cDtm,function(x)rowSums(as.matrix(x)))
-				cDtm2<- cDtm
+			withProgress(session, {
+			setProgress(message="Identifying clusters and topics for your documents...")
+				isolate({
+					clusterData<- clusterDf()
+					corpus<- preprocessedCorpus()
+					clusteredDocs<- split(corpus,as.factor(clusterData$cluster))
+					cDtm<- lapply(clusteredDocs,function(x)DocumentTermMatrix(x))
+					rowTotals<- lapply(cDtm,function(x)rowSums(as.matrix(x)))
+					cDtm2<- cDtm
 
-				for (i in 1:length(cDtm)){
-					cDtm2[[i]]<- cDtm[[i]][rowTotals[[i]]>0,]}
-				topicModel<- mclapply(cDtm2,FUN=function(x)LDA(x,k=input$topicNumbers))
-				detectedTerms<- lapply(topicModel,function(x)terms(x,k=10))
-				names(detectedTerms)<- paste("Document Group",seq_along(detectedTerms))
-				rm(clusterData,corpus,clusteredDocs,cDtm,rowTotals,cDtm2)
-				detectedTerms
+					for (i in 1:length(cDtm)){
+						cDtm2[[i]]<- cDtm[[i]][rowTotals[[i]]>0,]}
+					topicModel<- mclapply(cDtm2,FUN=function(x)LDA(x,k=input$topicNumbers))
+					detectedTerms<- lapply(topicModel,function(x)terms(x,k=10))
+					names(detectedTerms)<- paste("Document Group",seq_along(detectedTerms))
+					rm(clusterData,corpus,clusteredDocs,cDtm,rowTotals,cDtm2)
+					detectedTerms
+				})
 			})
 		})
 		
@@ -489,7 +514,10 @@ dendroGraphic<- reactive({
 output$dendrogram<- renderPlot({ 
 				if(input$generateDendro==0)
 				return()
-				print(dendroGraphic())
+				withProgress(session, {
+				setProgress(message="Generating your Dendrogram...")
+					print(dendroGraphic())
+			})
 		})
 
 output$downloadDendro<- downloadHandler(
@@ -534,7 +562,10 @@ associativeCloud<- reactive({
 output$assocCloud<- renderPlot({
 				if(input$generateAssoc==0)
 				return()
-				print(associativeCloud())
+				withProgress(session, {
+				setProgress(message="Generating your Word Cloud...")
+					print(associativeCloud())
+			})
 		})
 
 output$downloadAssoc<- downloadHandler(
@@ -560,9 +591,6 @@ wordNetworkGraph<- reactive({
 				if(input$generateNetwork==0)
 				return()
 				isolate({
-					#progress<- Progress$new(session,min=1,max=15)
-					#on.exit(progress$close())
-					#progress$set(message="Loading Graphic")
 					initialMat<- finalUnigramMatrix()
 					secondaryMat<- as.matrix(initialMat)
 					adjacencyMat<- secondaryMat %*% t(secondaryMat)
@@ -628,7 +656,10 @@ wordNetworkGraph<- reactive({
 output$wordNetwork<- renderPlot({
 				if(input$generateNetwork==0)
 				return()
-				print(wordNetworkGraph())
+				withProgress(sesssion, {
+				setProgress(message="Generating your Word Network...")
+					print(wordNetworkGraph())
+			})
 		})
 
 output$downloadNetwork<- downloadHandler(
