@@ -135,12 +135,13 @@ initialCorpus<- reactive({
 					userUpload<- reactive({ input$myPath })
 					filePath<- userUpload()$datapath
 					myData<- unlist(lapply(filePath,function(x)scan(file=x,what="character",sep="\n")))
+					Encoding(myData)<- "UTF-8"
 					myCorpus<- Corpus(VectorSource(myData))
 					return(myCorpus)
 					}
 				else{
 					myFile<- getURL(url=paste0(ghubURL,input$sampleCorpus,".txt"),ssl.verifypeer=FALSE)
-					txtFile<- scan(textConnection(myFile),sep="\n",what="character")
+					txtFile<- scan(textConnection(myFile, encoding="UTF-8"),sep="\n",what="character",fileEncoding="UTF-8",encoding="UTF-8")
 					myCorpus<- Corpus(VectorSource(txtFile))
 					return(myCorpus)
 					} 
