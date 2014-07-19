@@ -2,29 +2,29 @@
 
 ###========================== Code Map
 
-##> Section 0: Preliminary Code
+## Section 0: Preliminary Code
 #Contains code that will be run upon the start of the application
 
-##> Section 1: Importing Corpus
+## Section 1: Importing Corpus
 #Contains code to either import corpus from the user, or to select a custom corpus coupled with the application
 
-##> Section 2: Preprocessing
+## Section 2: Preprocessing
 #Contains code used for performing preprocessing functions on data
 
-##> Section 3: Feature Generation, Weighting, Selection
+## Section 3: Feature Generation, Weighting, Selection
 #Contains code used for generating, weighting, and performing (very) basic feature selection techniques
 
-##> Section 4: Initial analysis
+## Section 4: Initial analysis
 #Contains code for generating graphs for initial analyses, namely a Rank-Frequency graph and a Word Frequency graph
 
-##> Section 5: Clustering Documents
+## Section 5: Clustering Documents
 #Contains code used for performing basic document clustering based on the VectorSpace model and utilising the cosine distance.
 #The k-means method of clustering has been used, along with Topic models, to cluster documents, and identify their topics.
 
-##> Section 6: Clustering Words
+## Section 6: Clustering Words
 #Contains code used for performing basic word clustering, both hierarchical and partitional
 
-##> Section 7: Word Networks
+## Section 7: Word Networks
 #Contains code for generating graphs that look a network of words
 
 
@@ -64,6 +64,7 @@ if(useStopwords != FALSE){
 	}
 if (useCustomStopwords != FALSE){
 	stopwordsList<- unlist(strsplit(customStopwords,split=","))
+	Encoding(stopwordsList)<- "UTF-8"
 	modifiedStopwordsList<- gsub("^\\s*","\\\\b",stopwordsList)
 	modifiedStopwordsList<- gsub("\\s*$","\\\\b",modifiedStopwordsList)
 	x<- mapply(FUN=function(...){
@@ -73,6 +74,8 @@ if (useCustomStopwords != FALSE){
 if(useSynonyms != FALSE){
 	toChange<- unlist(strsplit(initialWords,split=","))
 	changeInto<- unlist(strsplit(replacementWords,split=","))
+	Encoding(toChange)<- "UTF-8"
+	Encoding(changeInto)<- "UTF-8"
 	toChangeWords<- gsub("^\\s*","\\\\b",toChange)
 	toChangeWords<- gsub("\\s*$","\\\\b",toChangeWords)
 	changeIntoWords<- gsub("^\\s*|\\s*$","",changeInto)
@@ -135,14 +138,14 @@ initialCorpus<- reactive({
 					userUpload<- reactive({ input$myPath })
 					filePath<- userUpload()$datapath
 					myData<- unlist(lapply(filePath,function(x)scan(file=x,what="character",sep="\n",fileEncoding="UTF-8",encoding="UTF-8")))
-					#Encoding(myData)<- "UTF-8"
+					Encoding(myData)<- "UTF-8"
 					myCorpus<- Corpus(VectorSource(myData))
 					return(myCorpus)
 					}
 				else{
 					myFile<- getURL(url=paste0(ghubURL,input$sampleCorpus,".txt"),ssl.verifypeer=FALSE)
 					txtFile<- scan(textConnection(myFile, encoding="UTF-8"),sep="\n",what="character",fileEncoding="UTF-8",encoding="UTF-8")
-					#Encoding(txtFile)<- "UTF-8"
+					Encoding(txtFile)<- "UTF-8"
 					myCorpus<- Corpus(VectorSource(txtFile))
 					return(myCorpus)
 					} 
