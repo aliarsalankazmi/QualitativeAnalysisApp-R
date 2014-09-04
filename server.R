@@ -3,35 +3,35 @@
 
 ### ========================== Code Map
 
-## Section 0: Preliminary Code Contains code that will be run upon the start of
+## Section 0: Load libraries and functions contains code that will be run at the start of
 ## the application
 
-## Section 1: Importing Corpus Contains code to either import corpus from the
+## Section 1: Importing Corpus contains code to either import corpus from the
 ## user, or to select a custom corpus coupled with the application
 
-## Section 2: Preprocessing Contains code used for performing preprocessing
+## Section 2: Preprocessing contains code used for performing preprocessing
 ## functions on data
 
-## Section 3: Feature Generation, Weighting, Selection Contains code used for
+## Section 3: Feature Generation, Weighting, Selection contains code for
 ## generating, weighting, and performing (very) basic feature selection techniques
 
-## Section 4: Initial analysis Contains code for generating graphs for initial
-## analyses, namely a Rank-Frequency graph and a Word Frequency graph
+## Section 4: Initial analysis contains code for initial analyses
+## namely a Rank-Frequency graph and a Word Frequency graph
 
-## Section 5: Clustering Documents Contains code used for performing basic
+## Section 5: Clustering Documents Contains code for performing basic
 ## document clustering based on the VectorSpace model and utilising the cosine
 ## distance. The k-means method of clustering has been used, along with Topic
 ## models, to cluster documents, and identify their topics.
 
-## Section 6: Clustering Words Contains code used for performing basic word
-## clustering, both hierarchical and partitional
+## Section 6: Clustering Words contains code for performing basic word
+## clustering, both hierarchical and partitional.
 
-## Section 7: Word Networks Contains code for generating graphs that look a
-## network of words
+## Section 7: Word Networks contains code for generating graphs for a
+## network of words.
 
 
 # ========================================================================================================================#
-# ============================ Section 0: Load libraries
+# ============================ Section 0: Load libraries and functions
 # ==========================================================================##
 
 require(shiny)
@@ -52,7 +52,7 @@ require(shinyIncubator)
 
 # ======= Pre-processing Corpus
 
-cleanSweepCorpus<- function(corpus, useStopwords=FALSE, stem=FALSE, removePunct=FALSE, removeNum=FALSE, useSynonyms=FALSE,
+cleanSweepCorpus<- function(corpus, useStopwords=FALSE, removePunct=FALSE, removeNum=FALSE, useSynonyms=FALSE,
 			    initialWords, replacementWords, useCustomStopwords=FALSE, customStopwords){
   newCorpus <- corpus
   newCorpus <- sapply(newCorpus, function(x) tolower(x))
@@ -102,13 +102,15 @@ cleanSweepCorpus<- function(corpus, useStopwords=FALSE, stem=FALSE, removePunct=
   newCorpus <- gsub("[[:space:]]*$", "", newCorpus)
   newCorpus <- gsub("[^[:alnum:]]", " ", newCorpus)
   newCorpus <- newCorpus[which(newCorpus != "")]
-  if (stem != FALSE){
-	newCorpus <- sapply(newCorpus, wordStem)
-  }
+#  if (stem != FALSE){
+#	newCorpus <- sapply(newCorpus, wordStem)
+#  }
   finalCorpus <- Corpus(VectorSource(newCorpus))
   finalCorpus <- tm_map(finalCorpus, stripWhitespace)
   return(finalCorpus)
 }
+
+
 
 
 # ======= Cosine similarity function for checking document similarity
@@ -196,7 +198,8 @@ shinyServer(function(input, output, session) {
         isolate({
             originalCorpus <- initialCorpus()
             newCorpus <- cleanSweepCorpus(corpus = originalCorpus, useStopwords = input$stopwords, 
-                stem = input$stemming, removePunct = input$punctuation, removeNum = input$numbers, 
+#               stem = input$stemming, 
+                removePunct = input$punctuation, removeNum = input$numbers, 
                 useSynonyms = input$customThes, useCustomStopwords = input$customStopword, 
                 initialWords = input$customThesInitial, replacementWords = input$customThesReplacement, 
                 customStopwords = input$cusStopwords)
@@ -220,8 +223,8 @@ shinyServer(function(input, output, session) {
     
     
     # ========================================================================================================================#
-    # =========================== Section 3: Feature Generation, Weighting, and
-    # Selection ========================================##
+    # =========================== Section 3: Feature Generation, Weighting, and Selection
+    # ========================================##
     
     
     
@@ -513,7 +516,7 @@ shinyServer(function(input, output, session) {
         paste0("DocClusters", Sys.time(), ".pdf")
     }, content = function(file) {
         pdf(file, width = 14, height = 12)
-        print(mdsDocClustering())
+        print(docClustering())
         dev.off()
     })
     
@@ -719,7 +722,7 @@ shinyServer(function(input, output, session) {
     output$wordNetwork <- renderPlot({
         if (input$generateNetwork == 0) 
             return()
-        withProgress(sesssion, {
+        withProgress(session, {
             setProgress(message = "Generating your Word Network...")
             print(wordNetworkGraph())
         })
