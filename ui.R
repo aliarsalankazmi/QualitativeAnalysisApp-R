@@ -55,7 +55,7 @@ sidebarPanel(tags$h4("Phase Selection"),
 		wellPanel(tags$strong("Pre-processing on Corpus"),
 		checkboxInput("punctuation","Punctuation Removal",FALSE),
 		checkboxInput("numbers","Numbers Removal",FALSE),
-		checkboxInput("stemming","Stem Words",FALSE),
+#		checkboxInput("stemming","Stem Words",FALSE),
 		checkboxInput("stopwords","Stopwords Removal",FALSE),
 		checkboxInput("customStopword","Custom Stopwords",FALSE),
 		conditionalPanel(
