@@ -7,7 +7,7 @@
     
 <h4> Application Description: </h4>
 
-    <p>This interactive application was originally developed for the <a href="http://www.norfolk-pcc.gov.uk/">Office of the Police and Crime Commissioner, Norfolk</a>, where it would be used to analyse Textual Data generated from surveys. In its present form, however, it has been modified to include a few additional functions that were not part of the original application.</p>
+    <p>This interactive application is intended to show how different statistical analyses of textual data could provide insights into the content of our data. This application does not intend to do away with thorough and interactive analyses in favour of basic, GUI-driven analyses. The techniques presented here may be found useful by users for some of their purposes, while in others they may deem the techniques insufficient. The objective of the author is more to provide a window into Qualitative analyses and to generate interest therein.</p>
     <hr>
     
 <h4> Aims: </h4>
@@ -17,36 +17,44 @@
             <li>Word Frequency Distributions (Rank-Frequency Plots)</li>
             <li>Hierarchical Clustering for Words (Dendrograms)</li>
             <li>Partitional Clustering for Words (Associative Word Clouds)</li>
-            <li>Partitional Clustering for Documents (Distance matrices & Multi-dimensional Scaling)</li>
+            <li>Partitional Clustering for Documents (Multidimensional Scaling and Topic Modeling)</li>
             <li>Words' Associations (Words' Network)</li>
         </ul>
-<em>Note:</em> This application does not intend to do away with thorough and interactive analyses in favour of GUI-driven analyses. The techniques presented here may be found useful by users in some of their applications, while in others they may be deemed insufficient. The intent of the author is more to provide a window into Qualitative analyses and to generate interest.</p>
+    </p>
     <hr>
     
 <h4> R Packages used and Acknowledgements: </h4>
 
-    <p>
+    <p>The following people were very significant in providing their assistance during the development of this application:
         <ul>
-            <li>The R-core team</li>
-            <li>The <a href="https://github.com/rstudio/shinyapps" target="_blank">ShinyApps</a> team, particularly <a href="https://github.com/kippandrew" target="_blank">Andy Kipp</a> for help with ShinyApps</li>
+            <li><a href="http://yihui.name/" target="_blank">Yihui Xie</a>
+            </li>
+            <li><a href="https://github.com/kippandrew" target="_blank">Andy Kipp</a>
+            </li>
+            <li><a href="https://www.linkedin.com/pub/beatriz-de-la-iglesia/5/467/5a8" target="_blank">Dr. Beatriz de la Iglesia</a>
+            </li>
+            <li><a href="http://www.snap.uaf.edu/people_page.php?id=17" target="_blank">Matthew Leonawicz</a>
+            </li>
+        </ul>
+    </p>
+    <p>The following packages were used in this application, without which, the current functionality would not have been possible:
+        <ul>
+            <li><a href="https://github.com/rstudio/shinyapps/blob/master/guide/guide.md" target="_blank">ShinyApps</a>
+            </li>
             <li><a href="http://cran.r-project.org/web/packages/shiny/index.html" target="_blank">Shiny</a>
-
-                <li>Authors of <a href="http://cran.r-project.org/web/packages/tm/index.html" target="_blank">tm</a>
-                </li>
-                <li>Authors of <a href="http://cran.r-project.org/web/packages/igraph/index.html" target="_blank">igraph</a>
-                </li>
-                <li>Hadley Wickham for <a href="http://cran.r-project.org/web/packages/ggplot2/index.html" target="_blank">ggplot2</a>, <a href="http://cran.r-project.org/web/packages/reshape2/index.html" target="_blank">reshape2</a>, and Advanced R Programming</li>
-                <li>Duncan Temple Lang for <a href="http://cran.r-project.org/web/packages/RCurl/index.html" target="_blank">RCurl</a>
-                </li>
-                <li>Daniel Mullner for <a href="http://cran.r-project.org/web/packages/fastcluster/index.html" target="_blank">fastcluster</a>
-                </li>
-                <li>Authors of <a href="http://cran.r-project.org/web/packages/Snowball/index.html" target="_blank">Snowball</a>
-                </li>
-                <li>Authors of <a href="http://cran.r-project.org/web/packages/RWeka/index.html" target="_blank">RWeka</a>
-                </li>
-                <li><a href="https://www.uea.ac.uk/computing/people/profile/b-iglesia" target="_blank">Dr. Beatriz de la Iglesia</a> for lectures on Data Mining</li>
-                <li><a href="http://www.snap.uaf.edu/people_page.php?id=17" target="_blank">Matthew Leonawicz</a> for <a href="www.blog.snap.uaf.edu">blog</a> on Shiny Apps</li>
-                <li><a href="http://drewconway.com/" target="_blank">Drew Conway</a> for parts of code in Associative Word Clouds</li>
+            </li>
+            <li><a href="http://cran.r-project.org/web/packages/tm/index.html" target="_blank">tm</a>
+            </li>
+            <li><a href="http://cran.r-project.org/web/packages/igraph/index.html" target="_blank">igraph</a>
+            </li>
+            <li><a href="http://cran.r-project.org/web/packages/ggplot2/index.html" target="_blank">ggplot2</a>
+            </li>
+            <li><a href="http://cran.r-project.org/web/packages/RCurl/index.html" target="_blank">RCurl</a>
+            </li>
+            <li><a href="http://cran.r-project.org/web/packages/fastcluster/index.html" target="_blank">fastcluster</a>
+            </li>
+            <li><a href="http://cran.r-project.org/web/packages/topicmodels/index.html" target="_blank">topicmodels</a>
+            </li>
         </ul>
     </p>
     <hr>
@@ -55,6 +63,7 @@
 
     <p><b>Ali Arsalan Kazmi</b> - Data Analyst</p>
     <p><pre><a href="https://db.tt/Cz4LafFr" target="_blank"><img src="https://db.tt/ynPx3fOs" alt="CV-Resume" width="35" height="30"></a>   <a href="http://www.linkedin.com/in/aliarsalankazmi" target="_blank"><img src="https://db.tt/JPqLa7Kh" alt="LinkedIn Profile" width="30" height="30"></a>    <a href="https://github.com/noobuseR" target="_blank"><img src="https://db.tt/i65tvSD3" alt="GitHub Profile" width="30" height="30"></a>    <a href="http://desertscrolls.wordpress.com/" target="_blank"><img src="https://db.tt/iIa2nK2B" alt="Blog on Data Analysis with R" width="30" height="30"></a></pre>
+
     </p>
     <p>Any comments or criticism is most welcome at: <a href="mailto:kazmialiarsalan@gmail.com">kazmialiarsalan@gmail.com</a> 
     </p>
