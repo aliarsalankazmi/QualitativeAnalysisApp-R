@@ -34,18 +34,17 @@
 # ============================ Section 0: Load libraries and functions
 # ==========================================================================##
 
-require(shiny)
-require(tm)
-require(fastcluster)
-require(ggplot2)
-require(RWeka)
-require(reshape2)
-require(RCurl)
-require(igraph)
-require(parallel)
-require(gsl)
-require(topicmodels)
-require(shinyIncubator)
+library(shiny)
+library(tm)
+library(fastcluster)
+library(ggplot2)
+library(reshape2)
+library(igraph)
+library(parallel)
+library(gsl)
+library(topicmodels)
+library(shinyIncubator)
+#library(SnowballC)
 
 
 # ============================= Build required functions
@@ -53,7 +52,8 @@ require(shinyIncubator)
 # ======= Pre-processing Corpus
 
 cleanSweepCorpus<- function(corpus, useStopwords=FALSE, removePunct=FALSE, removeNum=FALSE, useSynonyms=FALSE,
-			    initialWords, replacementWords, useCustomStopwords=FALSE, customStopwords){
+#				    stem = FALSE
+			          initialWords, replacementWords, useCustomStopwords=FALSE, customStopwords){
   newCorpus <- corpus
   newCorpus <- sapply(newCorpus, function(x) tolower(x))
   newCorpus <- gsub("[\\\\()/]", " ", newCorpus)
@@ -107,6 +107,7 @@ cleanSweepCorpus<- function(corpus, useStopwords=FALSE, removePunct=FALSE, remov
 #  }
   finalCorpus <- Corpus(VectorSource(newCorpus))
   finalCorpus <- tm_map(finalCorpus, stripWhitespace)
+  rm(corpus, newCorpus)
   return(finalCorpus)
 }
 
@@ -155,14 +156,14 @@ shinyServer(function(input, output, session) {
                 myData <- unlist(lapply(filePath, function(x) scan(file = x, what = "character", 
                   sep = "\n", fileEncoding = "UTF-8", encoding = "UTF-8")))
                 myCorpus <- Corpus(VectorSource(myData))
+                rm(myData)
                 return(myCorpus)
             } else {
-                myFile <- getURL(url = paste0(ghubURL, input$sampleCorpus, ".txt"), 
+                myFile <- RCurl::getURL(url = paste0(ghubURL, input$sampleCorpus, ".txt"), 
                   .encoding = "UTF-8", ssl.verifypeer = FALSE)
                 txtFile <- unlist(strsplit(myFile, split = "\n"))
-                # txtFile<- scan(textConnection(myFile,
-                # encoding='UTF-8'),sep='\n',what='character',fileEncoding='UTF-8',encoding='UTF-8')
                 myCorpus <- Corpus(VectorSource(txtFile))
+                rm(myFile, txtFile)
                 return(myCorpus)
             }
         })
@@ -441,7 +442,6 @@ shinyServer(function(input, output, session) {
             return()
         isolate({
             corpus <- preprocessedCorpus()
-            
             tdMat <- TermDocumentMatrix(corpus)
             lowerBound <- findFreqTerms(tdMat, round(input$lowerFreqBoundClust), 
                 Inf)
@@ -458,7 +458,7 @@ shinyServer(function(input, output, session) {
             clusterData <- data.frame(docNumber = colnames(tdMat), x = mdsPoints[, 
                 1], y = mdsPoints[, 2], cluster = kClusters$cluster)
             
-            rm(tdMat, TdMat, cosSimilarity, distMat, mdsPoints, kClusters)
+            rm(corpus, tdMat, TdMat, finalTdMat, cosSimilarity, distMat, mdsPoints, kClusters)
             return(clusterData)
         })
     })
@@ -499,7 +499,7 @@ shinyServer(function(input, output, session) {
                 topicModel <- mclapply(cDtm2, FUN = function(x) LDA(x, k = input$topicNumbers))
                 detectedTerms <- lapply(topicModel, function(x) terms(x, k = 10))
                 names(detectedTerms) <- paste("Document Group", seq_along(detectedTerms))
-                rm(clusterData, corpus, clusteredDocs, cDtm, rowTotals, cDtm2)
+                rm(clusterData, corpus, clusteredDocs, cDtm, rowTotals, cDtm2, topicModel)
                 detectedTerms
             })
         })
@@ -541,10 +541,11 @@ shinyServer(function(input, output, session) {
             mainMat <- finalUnigramMatrix()
             if (input$dendroSize != lowerFreqRangeDendro()[1]) {
                 targetWords <- findFreqTerms(mainMat, input$dendroSize, Inf)
-                mainMat <- mainMat[targetWords]
+                mainMat <- mainMat[targetWords, ]
             }
             distMat <- dist(scale(mainMat))
             dendro <- hclust(distMat, method = "average")
+            rm(mainMat, distMat)
             plot(dendro)
         })
     })
@@ -594,6 +595,7 @@ shinyServer(function(input, output, session) {
             if (input$assocSize != 0) {
                 wordsDf <- subset(wordsDf, affiliations > quantile(wordsDf$affiliations)[input$assocSize])
             }
+            rm(myMat, myAdjMat, adjGraph, wordsKmeans)
             ggplot(data = wordsDf, aes(x = x.pos, y = y.pos)) + geom_text(aes(label = term, 
                 size = freq, alpha = percentOfDoc, colour = groups)) + xlab("") + 
                 ylab("") + theme_bw() + scale_colour_brewer(palette = "Dark2", guide = "none") + 
@@ -665,6 +667,7 @@ shinyServer(function(input, output, session) {
                 names(auxiliaryDf)[4] <- "words"
                 finalDf <- merge(mainDf, auxiliaryDf, by = "words", sort = FALSE)
                 finalDf <- na.omit(finalDf)
+                rm(initialMat, secondaryMat, adjacencyMat, adjacencyDf, words, freq, affiliations, adjGraph, myEdges, mainDf, otherDf)
                 ggplot(data = finalDf, aes(x = x.pos, y = y.pos)) + geom_line(linetype = 1, 
                   aes(colour = weights, group = id, alpha = 0.2)) + geom_text(aes(x = x.pos, 
                   y = y.pos, label = words, size = freq)) + scale_size(guide = "none") + 
@@ -706,6 +709,8 @@ shinyServer(function(input, output, session) {
                 names(auxiliaryDf)[4] <- "words"
                 finalDf <- merge(mainDf, auxiliaryDf, by = "words", sort = FALSE)
                 finalDf <- na.omit(finalDf)
+                rm(initialMat, secondaryMat, adjacencyMat, adjacencyDf, words, freq, affiliations, initialDf, 
+                reducedAdjDf, incidGraph, Words, Edges, Weights, mainDf, wordMatch, otherDf, auxiliaryDf)
                 ggplot(data = finalDf, aes(x = x.pos, y = y.pos)) + geom_line(linetype = 1, 
                   aes(colour = weights, group = id, alpha = 0.2)) + geom_text(aes(x = x.pos, 
                   y = y.pos, label = words, size = freq)) + scale_size(guide = "none") + 
