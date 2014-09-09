@@ -469,8 +469,8 @@ shinyServer(function(input, output, session) {
             return()
         isolate({
             clusterData <- clusterDf()
-            ggplot(data = clusterData, aes(x = x, y = y)) + geom_point(aes(alpha = 0.2)) + 
-                geom_text(aes(label = docNumber, colour = as.factor(cluster), size = 2)) + 
+            ggplot(data = clusterData, aes(x = x, y = y)) + geom_point(aes(alpha = 0.2, colour = as.factor(cluster))) + 
+#               geom_text(aes(label = docNumber, colour = as.factor(cluster), size = 2)) + 
                 ggtitle("Clustering Documents") + scale_size(guide = "none") + scale_colour_brewer(palette = "Dark2", 
                 name = "Document Groups") + scale_alpha(guide = "none") + theme(axis.ticks = element_blank()) + 
                 xlab("") + ylab("") + scale_x_continuous(breaks = c(min(clusterData$x), 
@@ -667,7 +667,7 @@ shinyServer(function(input, output, session) {
                 names(auxiliaryDf)[4] <- "words"
                 finalDf <- merge(mainDf, auxiliaryDf, by = "words", sort = FALSE)
                 finalDf <- na.omit(finalDf)
-                rm(initialMat, secondaryMat, adjacencyMat, adjacencyDf, words, freq, affiliations, adjGraph, myEdges, mainDf, otherDf)
+                rm(initialMat, secondaryMat, adjacencyMat, adjGraph, myEdges, mainDf, otherDf)
                 ggplot(data = finalDf, aes(x = x.pos, y = y.pos)) + geom_line(linetype = 1, 
                   aes(colour = weights, group = id, alpha = 0.2)) + geom_text(aes(x = x.pos, 
                   y = y.pos, label = words, size = freq)) + scale_size(guide = "none") + 
